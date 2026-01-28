@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gimbal Control Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Basic Reset & Offline Support */
+        * { box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: #111827; color: white; margin: 0; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .flex-1 { flex: 1; }
+        .justify-between { justify-content: space-between; }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .grid { display: grid; }
+        .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        @media (min-width: 768px) { .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (min-width: 1024px) { .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+        .gap-4 { gap: 1rem; }
+        .gap-6 { gap: 1.5rem; }
+        .space-y-4 > * + * { margin-top: 1rem; }
+        .space-y-6 > * + * { margin-top: 1.5rem; }
+        .space-x-4 > * + * { margin-left: 1rem; }
+        .p-4 { padding: 1rem; }
+        .p-6 { padding: 1.5rem; }
+        .p-8 { padding: 2rem; }
+        .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+        .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mb-6 { margin-bottom: 1.5rem; }
+        .mt-4 { margin-top: 1rem; }
+        .bg-gray-800 { background-color: #1f2937; }
+        .bg-gray-700 { background-color: #374151; }
+        .bg-blue-600 { background-color: #2563eb; }
+        .bg-green-600 { background-color: #16a34a; }
+        .bg-purple-600 { background-color: #9333ea; }
+        .bg-red-500 { background-color: #ef4444; }
+        .bg-green-500 { background-color: #22c55e; }
+        .text-green-400 { color: #4ade80; }
+        .text-blue-400 { color: #60a5fa; }
+        .text-purple-400 { color: #c084fc; }
+        .text-gray-400 { color: #9ca3af; }
+        .text-white { color: white; }
+        .font-bold { font-weight: 700; }
+        .font-semibold { font-weight: 600; }
+        .text-xl { font-size: 1.25rem; }
+        .text-sm { font-size: 0.875rem; }
+        .rounded { border-radius: 0.25rem; }
+        .rounded-lg { border-radius: 0.5rem; }
+        .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .w-full { width: 100%; }
+        .hidden { display: none; }
+        .border-b { border-bottom-width: 1px; }
+        .border-gray-700 { border-color: #374151; }
+        input, button { font-family: inherit; }
+        input[type="text"], input[type="number"], input[type="password"] { border: 1px solid #4b5563; color: white; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* 3D Visualization */
+        .scene {
+            width: 200px;
+            height: 200px;
+            perspective: 600px;
+            margin: 0 auto;
+        }
+        .cube {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.1s;
+        }
+        .cube-face {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            border: 2px solid #4ade80;
+            opacity: 0.7;
+            background: rgba(74, 222, 128, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .face-front  { transform: rotateY(  0deg) translateZ(100px); }
+        .face-right  { transform: rotateY( 90deg) translateZ(100px); }
+        .face-back   { transform: rotateY(180deg) translateZ(100px); }
+        .face-left   { transform: rotateY(-90deg) translateZ(100px); }
+        .face-top    { transform: rotateX( 90deg) translateZ(100px); }
+        .face-bottom { transform: rotateX(-90deg) translateZ(100px); }
+
+        /* Axis Indicators */
+        .axis-line { position: absolute; top: 50%; left: 50%; width: 0; height: 0; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-gray-800 p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold text-green-400">Gimbal Control</h1>
+            <div class="space-x-4">
+                <button onclick="showTab('dashboard')" class="hover:text-green-400 font-medium transition tab-btn text-green-400" id="btn-dashboard">Dashboard</button>
+                <button onclick="showTab('config')" class="hover:text-green-400 font-medium transition tab-btn" id="btn-config">Configuration</button>
+                <button onclick="showTab('help')" class="hover:text-green-400 font-medium transition tab-btn" id="btn-help">Help</button>
+            </div>
+            <div class="text-xs text-gray-400">
+                <span id="connectionStatus" class="inline-block w-2 h-2 rounded-full bg-red-500 mr-1"></span>
+                <span id="versionDisplay">v1.1.0</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto p-4 flex-grow">
+
+        <!-- DASHBOARD TAB -->
+        <div id="dashboard" class="tab-content active space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- Controls -->
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg lg:col-span-1">
+                    <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">Controls</h2>
+
+                    <div class="mb-6 flex gap-2">
+                        <button onclick="setMode(0)" id="modeManual" class="flex-1 py-2 rounded bg-blue-600 hover:bg-blue-700 transition">Manual</button>
+                        <button onclick="setMode(1)" id="modeAuto" class="flex-1 py-2 rounded bg-gray-700 hover:bg-gray-600 transition">Auto (Stabilize)</button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between mb-1"><label>Yaw</label><span id="val-yaw">90</span>°</div>
+                            <input type="range" min="0" max="180" value="90" class="w-full" id="slider-yaw" oninput="onSliderChange()">
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1"><label>Pitch</label><span id="val-pitch">90</span>°</div>
+                            <input type="range" min="0" max="180" value="90" class="w-full" id="slider-pitch" oninput="onSliderChange()">
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1"><label>Roll</label><span id="val-roll">90</span>°</div>
+                            <input type="range" min="0" max="180" value="90" class="w-full" id="slider-roll" oninput="onSliderChange()">
+                        </div>
+                        <button onclick="centerGimbal()" class="w-full py-2 bg-green-600 hover:bg-green-700 rounded transition mt-4">Center Gimbal</button>
+                    </div>
+                </div>
+
+                <!-- Visualization -->
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg lg:col-span-1 flex flex-col items-center justify-center min-h-[300px]">
+                    <h2 class="text-xl font-semibold mb-8 border-b border-gray-700 pb-2 w-full">Visualization</h2>
+                    <div class="scene">
+                        <div class="cube" id="gimbalCube">
+                            <div class="cube-face face-front">FRONT</div>
+                            <div class="cube-face face-back">BACK</div>
+                            <div class="cube-face face-right">RIGHT</div>
+                            <div class="cube-face face-left">LEFT</div>
+                            <div class="cube-face face-top">TOP</div>
+                            <div class="cube-face face-bottom">BOTTOM</div>
+                        </div>
+                    </div>
+                    <p class="mt-8 text-sm text-gray-400">Real-time Orientation</p>
+                </div>
+
+                <!-- Sensor Data -->
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg lg:col-span-1">
+                    <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">Sensor Data</h2>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <h3 class="font-bold text-blue-400 mb-2">Accelerometer</h3>
+                            <div class="flex justify-between"><span>X:</span> <span id="acc-x" class="font-mono">0.00</span></div>
+                            <div class="flex justify-between"><span>Y:</span> <span id="acc-y" class="font-mono">0.00</span></div>
+                            <div class="flex justify-between"><span>Z:</span> <span id="acc-z" class="font-mono">0.00</span></div>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-purple-400 mb-2">Gyroscope</h3>
+                            <div class="flex justify-between"><span>X:</span> <span id="gyro-x" class="font-mono">0.00</span></div>
+                            <div class="flex justify-between"><span>Y:</span> <span id="gyro-y" class="font-mono">0.00</span></div>
+                            <div class="flex justify-between"><span>Z:</span> <span id="gyro-z" class="font-mono">0.00</span></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-gray-700">
+                        <h3 class="font-semibold mb-2">Timed Move</h3>
+                        <div class="flex gap-2 mb-2">
+                            <input type="number" id="tm-duration" placeholder="Sec" class="w-20 bg-gray-700 rounded px-2 py-1" value="5">
+                            <button onclick="startTimedMove()" class="flex-1 bg-purple-600 hover:bg-purple-700 rounded px-2">Execute Move</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONFIGURATION TAB -->
+        <div id="config" class="tab-content space-y-6">
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg max-w-2xl mx-auto">
+                <h2 class="text-xl font-semibold mb-6 border-b border-gray-700 pb-2">System Configuration</h2>
+
+                <form onsubmit="saveConfig(event)" class="space-y-6">
+
+                    <!-- WiFi -->
+                    <div>
+                        <h3 class="text-lg font-medium text-blue-400 mb-3">WiFi Settings</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm mb-1">SSID</label>
+                                <input type="text" id="cfg-wifi-ssid" class="w-full bg-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-1">Password</label>
+                                <input type="password" id="cfg-wifi-pass" class="w-full bg-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="********">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hotspot -->
+                    <div>
+                        <h3 class="text-lg font-medium text-orange-400 mb-3">Hotspot Settings</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm mb-1">AP SSID</label>
+                                <input type="text" id="cfg-ap-ssid" class="w-full bg-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-1">AP Password</label>
+                                <input type="password" id="cfg-ap-pass" class="w-full bg-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PID -->
+                    <div>
+                        <h3 class="text-lg font-medium text-green-400 mb-3">PID Parameters</h3>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm mb-1">Kp</label>
+                                <input type="number" step="0.1" id="cfg-kp" class="w-full bg-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-1">Ki</label>
+                                <input type="number" step="0.1" id="cfg-ki" class="w-full bg-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-1">Kd</label>
+                                <input type="number" step="0.1" id="cfg-kd" class="w-full bg-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Offsets -->
+                    <div>
+                        <h3 class="text-lg font-medium text-purple-400 mb-3">Servo Offsets</h3>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm mb-1">Yaw</label>
+                                <input type="number" id="cfg-off-yaw" class="w-full bg-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-1">Pitch</label>
+                                <input type="number" id="cfg-off-pitch" class="w-full bg-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-1">Roll</label>
+                                <input type="number" id="cfg-off-roll" class="w-full bg-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end pt-4 border-t border-gray-700">
+                        <button type="button" onclick="loadConfig()" class="px-4 py-2 mr-2 rounded bg-gray-600 hover:bg-gray-500">Reload</button>
+                        <button type="submit" class="px-6 py-2 rounded bg-blue-600 hover:bg-blue-700 font-bold">Save Configuration</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg max-w-2xl mx-auto">
+                <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">Firmware Update</h2>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm text-gray-400">Current Version</div>
+                        <div class="font-mono text-lg" id="fw-version">Loading...</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-400">Hardware</div>
+                        <div class="font-mono text-lg" id="hw-version">Loading...</div>
+                    </div>
+                    <button onclick="checkForUpdates()" class="px-4 py-2 rounded bg-gray-700 hover:bg-gray-600">Check for Updates</button>
+                </div>
+                <div id="update-msg" class="mt-4 text-sm hidden"></div>
+            </div>
+        </div>
+
+        <!-- HELP TAB -->
+        <div id="help" class="tab-content">
+            <div class="bg-gray-800 p-8 rounded-lg shadow-lg max-w-4xl mx-auto prose prose-invert">
+                <h1>Gimbal User Guide</h1>
+
+                <h3>Quick Start</h3>
+                <ol>
+                    <li>Power on the ESP32 Gimbal.</li>
+                    <li>Connect via WiFi or the "Gimbal_AP" hotspot.</li>
+                    <li>Use the <strong>Dashboard</strong> to control the gimbal.</li>
+                </ol>
+
+                <h3>Control Modes</h3>
+                <ul>
+                    <li><strong>Manual Mode</strong>: Direct control using the sliders. Useful for setting specific angles or testing servos.</li>
+                    <li><strong>Auto Mode</strong>: The gimbal will attempt to stabilize itself using the MPU6050 gyroscope data. It maintains the target angle relative to the horizon.</li>
+                </ul>
+
+                <h3>Configuration</h3>
+                <p>Visit the <strong>Configuration</strong> tab to change:</p>
+                <ul>
+                    <li><strong>WiFi Credentials</strong>: Connect to your home network.</li>
+                    <li><strong>Hotspot Settings</strong>: Change the fallback AP name and password.</li>
+                    <li><strong>PID Parameters</strong>: Tune the stabilization loop (Kp, Ki, Kd). Advanced users only!</li>
+                </ul>
+
+                <h3>Troubleshooting</h3>
+                <ul>
+                    <li><strong>Drift</strong>: If the gimbal drifts, check if the MPU6050 is calibrated or adjust the PID 'I' term.</li>
+                    <li><strong>Jitter</strong>: Servo jitter usually means the PID 'P' or 'D' terms are too high.</li>
+                    <li><strong>No Connection</strong>: Ensure you are connected to the correct WiFi network.</li>
+                </ul>
+
+                <div class="mt-8 p-4 bg-gray-700 rounded">
+                    <p class="text-sm">For more support, visit our <a href="#" class="text-blue-400 underline">Project Repository</a>.</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- Globals ---
+        let ws;
+        let currentMode = 0;
+        let lastPos = { yaw: 90, pitch: 90, roll: 90 };
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            connectWebSocket();
+            fetchVersion();
+            loadConfig(); // Initial load
+
+            // Periodically check connection
+            setInterval(() => {
+                if (!ws || ws.readyState === WebSocket.CLOSED) connectWebSocket();
+            }, 3000);
+        });
+
+        // --- Tabs ---
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('text-green-400'));
+            document.getElementById('btn-' + tabId).classList.add('text-green-400');
+        }
+
+        // --- WebSocket ---
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = window.location.hostname || '192.168.4.1'; // Fallback for testing
+            ws = new WebSocket(`${protocol}//${host}/ws`);
+
+            ws.onopen = () => {
+                console.log('WS Connected');
+                document.getElementById('connectionStatus').classList.remove('bg-red-500');
+                document.getElementById('connectionStatus').classList.add('bg-green-500');
+            };
+
+            ws.onclose = () => {
+                console.log('WS Disconnected');
+                document.getElementById('connectionStatus').classList.remove('bg-green-500');
+                document.getElementById('connectionStatus').classList.add('bg-red-500');
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                updateDashboard(data);
+            };
+        }
+
+        function updateDashboard(data) {
+            // Update Sensor Data
+            if (data.sensors) {
+                document.getElementById('acc-x').innerText = data.sensors.accel.x.toFixed(2);
+                document.getElementById('acc-y').innerText = data.sensors.accel.y.toFixed(2);
+                document.getElementById('acc-z').innerText = data.sensors.accel.z.toFixed(2);
+                document.getElementById('gyro-x').innerText = data.sensors.gyro.x.toFixed(2);
+                document.getElementById('gyro-y').innerText = data.sensors.gyro.y.toFixed(2);
+                document.getElementById('gyro-z').innerText = data.sensors.gyro.z.toFixed(2);
+            }
+
+            // Update Mode
+            if (data.mode !== undefined) {
+                currentMode = data.mode;
+                const manualBtn = document.getElementById('modeManual');
+                const autoBtn = document.getElementById('modeAuto');
+                if (currentMode === 0) {
+                    manualBtn.classList.replace('bg-gray-700', 'bg-blue-600');
+                    autoBtn.classList.replace('bg-blue-600', 'bg-gray-700');
+                } else {
+                    manualBtn.classList.replace('bg-blue-600', 'bg-gray-700');
+                    autoBtn.classList.replace('bg-gray-700', 'bg-blue-600');
+                }
+            }
+
+            // Update Position & Cube
+            if (data.position) {
+                lastPos = data.position;
+
+                // Only update sliders if we are NOT dragging them (to avoid fighting)
+                // Or update them only in Auto mode
+                if (currentMode === 1) {
+                    document.getElementById('slider-yaw').value = data.position.yaw;
+                    document.getElementById('slider-pitch').value = data.position.pitch;
+                    document.getElementById('slider-roll').value = data.position.roll;
+                }
+
+                document.getElementById('val-yaw').innerText = Math.round(data.position.yaw);
+                document.getElementById('val-pitch').innerText = Math.round(data.position.pitch);
+                document.getElementById('val-roll').innerText = Math.round(data.position.roll);
+
+                updateCube(data.position);
+            }
+        }
+
+        // --- Controls ---
+        function setMode(mode) {
+            sendCmd({ cmd: 'setMode', mode: mode });
+        }
+
+        function onSliderChange() {
+            // Only send manual commands if in manual mode
+            if (currentMode !== 0) return;
+
+            const yaw = parseInt(document.getElementById('slider-yaw').value);
+            const pitch = parseInt(document.getElementById('slider-pitch').value);
+            const roll = parseInt(document.getElementById('slider-roll').value);
+
+            document.getElementById('val-yaw').innerText = yaw;
+            document.getElementById('val-pitch').innerText = pitch;
+            document.getElementById('val-roll').innerText = roll;
+
+            sendCmd({ cmd: 'setPosition', yaw, pitch, roll });
+
+            // Immediate local update for responsiveness
+            updateCube({ yaw, pitch, roll });
+        }
+
+        function centerGimbal() {
+            sendCmd({ cmd: 'center' });
+        }
+
+        function startTimedMove() {
+            const duration = parseInt(document.getElementById('tm-duration').value) * 1000;
+            const yaw = parseInt(document.getElementById('slider-yaw').value);
+            const pitch = parseInt(document.getElementById('slider-pitch').value);
+            const roll = parseInt(document.getElementById('slider-roll').value);
+
+            sendCmd({
+                cmd: 'startTimedMove',
+                duration: duration,
+                endYaw: yaw,
+                endPitch: pitch,
+                endRoll: roll
+            });
+        }
+
+        function sendCmd(obj) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(obj));
+            }
+        }
+
+        // --- Visualization ---
+        function updateCube(pos) {
+            const cube = document.getElementById('gimbalCube');
+            // Mapping: Yaw -> RotateY, Pitch -> RotateX, Roll -> RotateZ
+            // Adjust signs based on coordinate system
+            cube.style.transform = `rotateY(${pos.yaw - 90}deg) rotateX(${pos.pitch - 90}deg) rotateZ(${pos.roll - 90}deg)`;
+        }
+
+        // --- Configuration ---
+        async function loadConfig() {
+            try {
+                const res = await fetch('/api/config');
+                const cfg = await res.json();
+
+                document.getElementById('cfg-wifi-ssid').value = cfg.wifi_ssid || '';
+                // document.getElementById('cfg-wifi-pass').value = cfg.wifi_password || ''; // Don't show password
+                document.getElementById('cfg-ap-ssid').value = cfg.hotspot_ssid || '';
+                document.getElementById('cfg-ap-pass').value = cfg.hotspot_password || '';
+
+                document.getElementById('cfg-kp').value = cfg.kp;
+                document.getElementById('cfg-ki').value = cfg.ki;
+                document.getElementById('cfg-kd').value = cfg.kd;
+
+                document.getElementById('cfg-off-yaw').value = cfg.yaw_offset;
+                document.getElementById('cfg-off-pitch').value = cfg.pitch_offset;
+                document.getElementById('cfg-off-roll').value = cfg.roll_offset;
+            } catch (e) {
+                console.error("Failed to load config", e);
+            }
+        }
+
+        async function saveConfig(e) {
+            e.preventDefault();
+            const config = {
+                wifi_ssid: document.getElementById('cfg-wifi-ssid').value,
+                hotspot_ssid: document.getElementById('cfg-ap-ssid').value,
+                hotspot_password: document.getElementById('cfg-ap-pass').value,
+                kp: parseFloat(document.getElementById('cfg-kp').value),
+                ki: parseFloat(document.getElementById('cfg-ki').value),
+                kd: parseFloat(document.getElementById('cfg-kd').value),
+                yaw_offset: parseInt(document.getElementById('cfg-off-yaw').value),
+                pitch_offset: parseInt(document.getElementById('cfg-off-pitch').value),
+                roll_offset: parseInt(document.getElementById('cfg-off-roll').value)
+            };
+
+            const wifiPass = document.getElementById('cfg-wifi-pass').value;
+            if (wifiPass) config.wifi_password = wifiPass;
+
+            try {
+                const res = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                if (res.ok) alert('Configuration saved!');
+                else alert('Error saving configuration');
+            } catch (e) {
+                alert('Error saving configuration');
+            }
+        }
+
+        // --- Version Check ---
+        async function fetchVersion() {
+            try {
+                const res = await fetch('/api/version');
+                const data = await res.json();
+                document.getElementById('fw-version').innerText = data.firmware;
+                document.getElementById('hw-version').innerText = data.hardware;
+                document.getElementById('versionDisplay').innerText = 'v' + data.firmware;
+            } catch (e) {
+                console.log("Mock version loaded");
+                document.getElementById('fw-version').innerText = "1.1.0";
+                document.getElementById('hw-version').innerText = "ESP32-GIMBAL-V1";
+            }
+        }
+
+        function checkForUpdates() {
+            const msg = document.getElementById('update-msg');
+            msg.innerText = "Checking for updates...";
+            msg.classList.remove('hidden', 'text-green-400', 'text-red-400');
+            msg.classList.add('text-yellow-400');
+
+            // Mock check
+            setTimeout(() => {
+                msg.innerText = "You are on the latest version.";
+                msg.classList.replace('text-yellow-400', 'text-green-400');
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
