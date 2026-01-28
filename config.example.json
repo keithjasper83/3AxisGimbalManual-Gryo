@@ -1,0 +1,194 @@
+{
+  "project": {
+    "name": "3-Axis Gimbal Control System",
+    "version": "1.0.0",
+    "description": "ESP32-based gimbal control with web interface and API"
+  },
+  "esp32": {
+    "wifi": {
+      "ssid": "YourWiFiSSID",
+      "password": "YourWiFiPassword",
+      "timeout_ms": 10000
+    },
+    "hotspot": {
+      "ssid": "Gimbal_AP",
+      "password": "gimbal123"
+    },
+    "hardware": {
+      "servos": {
+        "yaw": {
+          "pin": 13,
+          "min_angle": 0,
+          "max_angle": 180,
+          "center": 90,
+          "min_pulse_us": 500,
+          "max_pulse_us": 2500
+        },
+        "pitch": {
+          "pin": 12,
+          "min_angle": 0,
+          "max_angle": 180,
+          "center": 90,
+          "min_pulse_us": 500,
+          "max_pulse_us": 2500
+        },
+        "roll": {
+          "pin": 14,
+          "min_angle": 0,
+          "max_angle": 180,
+          "center": 90,
+          "min_pulse_us": 500,
+          "max_pulse_us": 2500
+        }
+      },
+      "mpu6050": {
+        "sda_pin": 21,
+        "scl_pin": 22,
+        "i2c_address": "0x68",
+        "accelerometer_range": "8G",
+        "gyro_range": "500DEG",
+        "filter_bandwidth": "21HZ"
+      }
+    },
+    "control": {
+      "modes": {
+        "manual": 0,
+        "auto": 1
+      },
+      "pid": {
+        "kp": 2.0,
+        "ki": 0.5,
+        "kd": 1.0
+      },
+      "update_rates": {
+        "sensor_ms": 10,
+        "servo_ms": 20,
+        "websocket_ms": 100
+      }
+    },
+    "network": {
+      "http_port": 80,
+      "websocket_port": 8080
+    }
+  },
+  "backend": {
+    "server": {
+      "host": "0.0.0.0",
+      "port": 8000,
+      "reload": false
+    },
+    "cors": {
+      "allow_origins": ["*"],
+      "allow_credentials": true,
+      "allow_methods": ["*"],
+      "allow_headers": ["*"]
+    },
+    "websocket": {
+      "max_connections": 100,
+      "ping_interval": 30,
+      "ping_timeout": 10
+    }
+  },
+  "presets": [
+    {
+      "name": "center",
+      "description": "Center position",
+      "steps": [
+        {
+          "position": {"yaw": 90, "pitch": 90, "roll": 90},
+          "duration": 1000,
+          "delay": 0
+        }
+      ]
+    },
+    {
+      "name": "sweep",
+      "description": "Horizontal sweep",
+      "steps": [
+        {
+          "position": {"yaw": 0, "pitch": 90, "roll": 90},
+          "duration": 2000,
+          "delay": 0
+        },
+        {
+          "position": {"yaw": 180, "pitch": 90, "roll": 90},
+          "duration": 5000,
+          "delay": 500
+        },
+        {
+          "position": {"yaw": 90, "pitch": 90, "roll": 90},
+          "duration": 2000,
+          "delay": 500
+        }
+      ]
+    },
+    {
+      "name": "scan",
+      "description": "Vertical scan pattern",
+      "steps": [
+        {
+          "position": {"yaw": 90, "pitch": 0, "roll": 90},
+          "duration": 1500,
+          "delay": 0
+        },
+        {
+          "position": {"yaw": 90, "pitch": 180, "roll": 90},
+          "duration": 4000,
+          "delay": 300
+        },
+        {
+          "position": {"yaw": 90, "pitch": 90, "roll": 90},
+          "duration": 1500,
+          "delay": 300
+        }
+      ]
+    },
+    {
+      "name": "figure_eight",
+      "description": "Figure-8 pattern",
+      "steps": [
+        {
+          "position": {"yaw": 45, "pitch": 60, "roll": 90},
+          "duration": 2000,
+          "delay": 0
+        },
+        {
+          "position": {"yaw": 135, "pitch": 60, "roll": 90},
+          "duration": 2000,
+          "delay": 0
+        },
+        {
+          "position": {"yaw": 135, "pitch": 120, "roll": 90},
+          "duration": 2000,
+          "delay": 0
+        },
+        {
+          "position": {"yaw": 45, "pitch": 120, "roll": 90},
+          "duration": 2000,
+          "delay": 0
+        },
+        {
+          "position": {"yaw": 90, "pitch": 90, "roll": 90},
+          "duration": 1500,
+          "delay": 0
+        }
+      ]
+    }
+  ],
+  "calibration": {
+    "instructions": "See CALIBRATION.md for PID tuning guide",
+    "servo_trim": {
+      "yaw": 0,
+      "pitch": 0,
+      "roll": 0
+    },
+    "sensor_offset": {
+      "accel_x": 0.0,
+      "accel_y": 0.0,
+      "accel_z": 0.0,
+      "gyro_x": 0.0,
+      "gyro_y": 0.0,
+      "gyro_z": 0.0
+    }
+  }
+}
