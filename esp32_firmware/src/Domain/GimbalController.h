@@ -24,6 +24,9 @@ public:
 
     GimbalPosition getCurrentPosition();
     void center();
+    
+    void setFlatReference(); // Set current position as new flat reference
+    void runSelfTest(); // Run self-test routine
 
     void startTimedMove(float duration, GimbalPosition endPos);
 

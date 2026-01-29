@@ -4,6 +4,7 @@ bool SensorManager::begin() {
     Wire.begin(MPU6050_SDA, MPU6050_SCL);
     if (!mpu.begin()) {
         Serial.println("Failed to find MPU6050 chip");
+        _sensorAvailable = false;
         return false;
     }
 
@@ -11,11 +12,14 @@ bool SensorManager::begin() {
     mpu.setGyroRange(MPU6050_RANGE_500_DEG);
     mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
 
+    _sensorAvailable = true;
     return true;
 }
 
 void SensorManager::update() {
-    mpu.getEvent(&a, &g, &temp);
+    if (_sensorAvailable) {
+        mpu.getEvent(&a, &g, &temp);
+    }
 }
 
 SensorData SensorManager::getData() {

@@ -151,6 +151,73 @@ void GimbalController::center() {
     setManualPosition(SERVO_CENTER, SERVO_CENTER, SERVO_CENTER);
 }
 
+void GimbalController::setFlatReference() {
+    // Capture the current position as the new flat reference
+    xSemaphoreTake(_mutex, portMAX_DELAY);
+    GimbalPosition currentPos = _currentPos;
+    xSemaphoreGive(_mutex);
+    
+    // Update config with new flat reference
+    AppConfig config = _configManager.getConfig();
+    config.flat_ref_yaw = currentPos.yaw;
+    config.flat_ref_pitch = currentPos.pitch;
+    config.flat_ref_roll = currentPos.roll;
+    _configManager.updateConfig(config);
+    
+    Serial.println("Flat reference set to current position:");
+    Serial.printf("  Yaw: %.2f, Pitch: %.2f, Roll: %.2f\n", 
+                  currentPos.yaw, currentPos.pitch, currentPos.roll);
+}
+
+void GimbalController::runSelfTest() {
+    Serial.println("=== Running Gimbal Self-Test ===");
+    
+    // Test 1: Servo range test
+    Serial.println("Test 1: Servo Range Test");
+    xSemaphoreTake(_mutex, portMAX_DELAY);
+    
+    // Save current position
+    GimbalPosition originalPos = _currentPos;
+    
+    // Test each axis
+    _targetPos = {SERVO_MIN_ANGLE, SERVO_CENTER, SERVO_CENTER};
+    xSemaphoreGive(_mutex);
+    delay(500);
+    
+    xSemaphoreTake(_mutex, portMAX_DELAY);
+    _targetPos = {SERVO_MAX_ANGLE, SERVO_CENTER, SERVO_CENTER};
+    xSemaphoreGive(_mutex);
+    delay(500);
+    
+    xSemaphoreTake(_mutex, portMAX_DELAY);
+    _targetPos = {SERVO_CENTER, SERVO_MIN_ANGLE, SERVO_CENTER};
+    xSemaphoreGive(_mutex);
+    delay(500);
+    
+    xSemaphoreTake(_mutex, portMAX_DELAY);
+    _targetPos = {SERVO_CENTER, SERVO_MAX_ANGLE, SERVO_CENTER};
+    xSemaphoreGive(_mutex);
+    delay(500);
+    
+    xSemaphoreTake(_mutex, portMAX_DELAY);
+    _targetPos = {SERVO_CENTER, SERVO_CENTER, SERVO_MIN_ANGLE};
+    xSemaphoreGive(_mutex);
+    delay(500);
+    
+    xSemaphoreTake(_mutex, portMAX_DELAY);
+    _targetPos = {SERVO_CENTER, SERVO_CENTER, SERVO_MAX_ANGLE};
+    xSemaphoreGive(_mutex);
+    delay(500);
+    
+    // Restore original position
+    xSemaphoreTake(_mutex, portMAX_DELAY);
+    _targetPos = originalPos;
+    xSemaphoreGive(_mutex);
+    
+    Serial.println("Self-test complete!");
+    Serial.println("================================");
+}
+
 void GimbalController::startTimedMove(float duration, GimbalPosition endPos) {
     xSemaphoreTake(_mutex, portMAX_DELAY);
     _moveActive = true;

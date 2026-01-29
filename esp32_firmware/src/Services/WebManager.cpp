@@ -33,6 +33,9 @@ void WebManager::begin() {
         doc["yaw_offset"] = config.yaw_offset;
         doc["pitch_offset"] = config.pitch_offset;
         doc["roll_offset"] = config.roll_offset;
+        doc["flat_ref_yaw"] = config.flat_ref_yaw;
+        doc["flat_ref_pitch"] = config.flat_ref_pitch;
+        doc["flat_ref_roll"] = config.flat_ref_roll;
 
         String response;
         serializeJson(doc, response);
@@ -74,7 +77,31 @@ void WebManager::begin() {
 
     // Version Endpoint
     _server.on("/api/version", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send(200, "application/json", "{\"firmware\": \"1.1.0\", \"hardware\": \"ESP32-GIMBAL-V1\"}");
+        request->send(200, "application/json", "{\"firmware\": \"1.2.0\", \"hardware\": \"ESP32-GIMBAL-V1\"}");
+    });
+    
+    // Hardware Status Endpoint
+    _server.on("/api/hardware-status", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        StaticJsonDocument<512> doc;
+        doc["sensor_available"] = _sensorManager.isAvailable();
+        doc["config_ok"] = true; // If we're here, config is working
+        doc["servo_ok"] = true; // Assume servos are OK if system is running
+        
+        String response;
+        serializeJson(doc, response);
+        request->send(200, "application/json", response);
+    });
+    
+    // Set Flat Reference Endpoint
+    _server.on("/api/set-flat-reference", HTTP_POST, [this](AsyncWebServerRequest *request) {
+        _gimbalController.setFlatReference();
+        request->send(200, "application/json", "{\"status\":\"ok\",\"message\":\"Flat reference set to current position\"}");
+    });
+    
+    // Run Self Test Endpoint
+    _server.on("/api/self-test", HTTP_POST, [this](AsyncWebServerRequest *request) {
+        _gimbalController.runSelfTest();
+        request->send(200, "application/json", "{\"status\":\"ok\",\"message\":\"Self-test completed\"}");
     });
 
     _server.begin();
@@ -130,6 +157,10 @@ void WebManager::handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
             }
         } else if (strcmp(cmd, "center") == 0) {
             _gimbalController.center();
+        } else if (strcmp(cmd, "setFlatReference") == 0) {
+            _gimbalController.setFlatReference();
+        } else if (strcmp(cmd, "runSelfTest") == 0) {
+            _gimbalController.runSelfTest();
         }
         // Unknown commands are safely ignored
     }
@@ -151,6 +182,8 @@ void WebManager::broadcastStatus() {
     doc["sensors"]["gyro"]["x"] = sensors.gyroX;
     doc["sensors"]["gyro"]["y"] = sensors.gyroY;
     doc["sensors"]["gyro"]["z"] = sensors.gyroZ;
+    
+    doc["hardware"]["sensor_available"] = _sensorManager.isAvailable();
 
     String output;
     serializeJson(doc, output);
