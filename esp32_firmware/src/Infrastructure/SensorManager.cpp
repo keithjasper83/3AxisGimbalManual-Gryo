@@ -4,6 +4,7 @@ bool SensorManager::begin() {
     Wire.begin(MPU6050_SDA, MPU6050_SCL);
     if (!mpu.begin()) {
         Serial.println("Failed to find MPU6050 chip");
+        _sensorAvailable = false;
         return false;
     }
 
@@ -11,33 +12,47 @@ bool SensorManager::begin() {
     mpu.setGyroRange(MPU6050_RANGE_500_DEG);
     mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
 
+    _sensorAvailable = true;
     return true;
 }
 
 void SensorManager::update() {
-    mpu.getEvent(&a, &g, &temp);
+    if (_sensorAvailable) {
+        mpu.getEvent(&a, &g, &temp);
+    }
 }
 
 SensorData SensorManager::getData() {
     SensorData data;
-    data.accelX = a.acceleration.x;
-    data.accelY = a.acceleration.y;
-    data.accelZ = a.acceleration.z;
-    data.gyroX = g.gyro.x;
-    data.gyroY = g.gyro.y;
-    data.gyroZ = g.gyro.z;
-    data.temp = temp.temperature;
+    if (_sensorAvailable) {
+        data.accelX = a.acceleration.x;
+        data.accelY = a.acceleration.y;
+        data.accelZ = a.acceleration.z;
+        data.gyroX = g.gyro.x;
+        data.gyroY = g.gyro.y;
+        data.gyroZ = g.gyro.z;
+        data.temp = temp.temperature;
+    } else {
+        // Return zeros when sensor is not available
+        data.accelX = 0.0;
+        data.accelY = 0.0;
+        data.accelZ = 0.0;
+        data.gyroX = 0.0;
+        data.gyroY = 0.0;
+        data.gyroZ = 0.0;
+        data.temp = 0.0;
+    }
     return data;
 }
 
 float SensorManager::getGyroYaw() {
-    return g.gyro.z; // Keeping as rad/s for consistency with standard units, conversion handled in controller if needed
+    return _sensorAvailable ? g.gyro.z : 0.0;
 }
 
 float SensorManager::getGyroPitch() {
-    return g.gyro.y;
+    return _sensorAvailable ? g.gyro.y : 0.0;
 }
 
 float SensorManager::getGyroRoll() {
-    return g.gyro.x;
+    return _sensorAvailable ? g.gyro.x : 0.0;
 }

@@ -113,7 +113,7 @@
             </div>
             <div class="text-xs text-gray-400">
                 <span id="connectionStatus" class="inline-block w-2 h-2 rounded-full bg-red-500 mr-1"></span>
-                <span id="versionDisplay">v1.1.0</span>
+                <span id="versionDisplay">v1.2.0</span>
             </div>
         </div>
     </nav>
@@ -191,6 +191,47 @@
                             <input type="number" id="tm-duration" placeholder="Sec" class="w-20 bg-gray-700 rounded px-2 py-1" value="5">
                             <button onclick="startTimedMove()" class="flex-1 bg-purple-600 hover:bg-purple-700 rounded px-2">Execute Move</button>
                         </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Hardware Status & Special Functions -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Hardware Status -->
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">Hardware Status</h2>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-300">MPU6050 Sensor:</span>
+                            <span id="hw-sensor-status" class="px-3 py-1 rounded text-sm bg-gray-700">Unknown</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-300">Servo Controllers:</span>
+                            <span class="px-3 py-1 rounded text-sm bg-green-600">Online</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-300">Configuration:</span>
+                            <span class="px-3 py-1 rounded text-sm bg-green-600">OK</span>
+                        </div>
+                    </div>
+                    <div id="hw-warning" class="mt-4 p-3 bg-yellow-900 border border-yellow-600 rounded text-sm hidden">
+                        <strong>⚠ Warning:</strong> <span id="hw-warning-text"></span>
+                    </div>
+                </div>
+                
+                <!-- Special Functions -->
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">Special Functions</h2>
+                    <div class="space-y-3">
+                        <button onclick="setFlatReference()" class="w-full py-3 bg-orange-600 hover:bg-orange-700 rounded transition font-semibold">
+                            🎯 Set Flat Reference
+                        </button>
+                        <p class="text-xs text-gray-400 -mt-1">Sets current position as new zero/flat reference</p>
+                        
+                        <button onclick="runSelfTest()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 rounded transition font-semibold mt-3">
+                            🔧 Run Self-Test
+                        </button>
+                        <p class="text-xs text-gray-400 -mt-1">Tests servo range and system functionality</p>
                     </div>
                 </div>
             </div>
@@ -312,6 +353,18 @@
                     <li><strong>Manual Mode</strong>: Direct control using the sliders. Useful for setting specific angles or testing servos.</li>
                     <li><strong>Auto Mode</strong>: The gimbal will attempt to stabilize itself using the MPU6050 gyroscope data. It maintains the target angle relative to the horizon.</li>
                 </ul>
+                
+                <h3>Special Functions</h3>
+                <ul>
+                    <li><strong>Set Flat Reference</strong>: Captures the current gimbal position and sets it as the new "flat" or zero reference point. This is useful for calibrating the gimbal to a specific orientation.</li>
+                    <li><strong>Run Self-Test</strong>: Executes a comprehensive test of all servo axes by moving them through their full range. This helps verify that all hardware is functioning correctly.</li>
+                    <li><strong>Hardware Button</strong>: If connected, a button can be used for:
+                        <ul>
+                            <li>Short press: Set flat reference</li>
+                            <li>Long press (3+ seconds): Run self-test</li>
+                        </ul>
+                    </li>
+                </ul>
 
                 <h3>Configuration</h3>
                 <p>Visit the <strong>Configuration</strong> tab to change:</p>
@@ -326,6 +379,8 @@
                     <li><strong>Drift</strong>: If the gimbal drifts, check if the MPU6050 is calibrated or adjust the PID 'I' term.</li>
                     <li><strong>Jitter</strong>: Servo jitter usually means the PID 'P' or 'D' terms are too high.</li>
                     <li><strong>No Connection</strong>: Ensure you are connected to the correct WiFi network.</li>
+                    <li><strong>Sensor Offline</strong>: If the MPU6050 sensor is not detected, the system will continue in manual mode. Auto stabilization will not be available until the sensor is connected and detected.</li>
+                    <li><strong>Hardware Warnings</strong>: Check the Hardware Status panel on the dashboard for any warnings about missing or malfunctioning components.</li>
                 </ul>
 
                 <div class="mt-8 p-4 bg-gray-700 rounded">
@@ -430,6 +485,26 @@
 
                 updateCube(data.position);
             }
+            
+            // Update Hardware Status
+            if (data.hardware) {
+                const sensorStatus = document.getElementById('hw-sensor-status');
+                const hwWarning = document.getElementById('hw-warning');
+                const hwWarningText = document.getElementById('hw-warning-text');
+                
+                if (data.hardware.sensor_available) {
+                    sensorStatus.innerText = 'Online';
+                    sensorStatus.classList.remove('bg-red-600', 'bg-gray-700');
+                    sensorStatus.classList.add('bg-green-600');
+                    hwWarning.classList.add('hidden');
+                } else {
+                    sensorStatus.innerText = 'Offline';
+                    sensorStatus.classList.remove('bg-green-600', 'bg-gray-700');
+                    sensorStatus.classList.add('bg-red-600');
+                    hwWarning.classList.remove('hidden');
+                    hwWarningText.innerText = 'MPU6050 sensor not detected. Auto stabilization mode will not work. Manual control is still available.';
+                }
+            }
         }
 
         // --- Controls ---
@@ -457,6 +532,20 @@
 
         function centerGimbal() {
             sendCmd({ cmd: 'center' });
+        }
+        
+        function setFlatReference() {
+            if (confirm('Set current position as the new flat/zero reference?')) {
+                sendCmd({ cmd: 'setFlatReference' });
+                alert('Flat reference has been set to current position!');
+            }
+        }
+        
+        function runSelfTest() {
+            if (confirm('Run gimbal self-test? This will move all servos through their range.')) {
+                sendCmd({ cmd: 'runSelfTest' });
+                alert('Self-test started. Check the serial console for results.');
+            }
         }
 
         function startTimedMove() {
@@ -551,7 +640,7 @@
                 document.getElementById('versionDisplay').innerText = 'v' + data.firmware;
             } catch (e) {
                 console.log("Mock version loaded");
-                document.getElementById('fw-version').innerText = "1.1.0";
+                document.getElementById('fw-version').innerText = "1.2.0";
                 document.getElementById('hw-version').innerText = "ESP32-GIMBAL-V1";
             }
         }

@@ -9,5 +9,8 @@
   "kd": 1.0,
   "yaw_offset": 0,
   "pitch_offset": 0,
-  "roll_offset": 0
+  "roll_offset": 0,
+  "flat_ref_yaw": 0,
+  "flat_ref_pitch": 0,
+  "flat_ref_roll": 0
 }

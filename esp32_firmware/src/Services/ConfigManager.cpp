@@ -18,6 +18,9 @@ void ConfigManager::resetToDefaults() {
     config.yaw_offset = 0;
     config.pitch_offset = 0;
     config.roll_offset = 0;
+    config.flat_ref_yaw = 0;
+    config.flat_ref_pitch = 0;
+    config.flat_ref_roll = 0;
     xSemaphoreGive(_mutex);
 }
 
@@ -73,6 +76,10 @@ bool ConfigManager::loadConfig() {
     config.yaw_offset = doc["yaw_offset"] | config.yaw_offset;
     config.pitch_offset = doc["pitch_offset"] | config.pitch_offset;
     config.roll_offset = doc["roll_offset"] | config.roll_offset;
+    
+    config.flat_ref_yaw = doc["flat_ref_yaw"] | config.flat_ref_yaw;
+    config.flat_ref_pitch = doc["flat_ref_pitch"] | config.flat_ref_pitch;
+    config.flat_ref_roll = doc["flat_ref_roll"] | config.flat_ref_roll;
 
     xSemaphoreGive(_mutex);
     return true;
@@ -98,6 +105,9 @@ bool ConfigManager::_saveConfigInternal() {
     doc["yaw_offset"] = config.yaw_offset;
     doc["pitch_offset"] = config.pitch_offset;
     doc["roll_offset"] = config.roll_offset;
+    doc["flat_ref_yaw"] = config.flat_ref_yaw;
+    doc["flat_ref_pitch"] = config.flat_ref_pitch;
+    doc["flat_ref_roll"] = config.flat_ref_roll;
 
     File file = LittleFS.open(_filename, "w");
     if (!file) {

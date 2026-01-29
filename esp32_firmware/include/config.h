@@ -17,6 +17,11 @@
 #define MPU6050_SDA 21
 #define MPU6050_SCL 22
 
+// Button Configuration
+#define BUTTON_PIN 15
+#define BUTTON_DEBOUNCE_MS 50
+#define BUTTON_LONG_PRESS_MS 3000
+
 // Servo Limits (degrees)
 #define SERVO_MIN_ANGLE 0
 #define SERVO_MAX_ANGLE 180

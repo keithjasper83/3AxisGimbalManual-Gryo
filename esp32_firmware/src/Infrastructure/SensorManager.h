@@ -19,8 +19,11 @@ public:
     float getGyroYaw();
     float getGyroPitch();
     float getGyroRoll();
+    
+    bool isAvailable() const { return _sensorAvailable; }
 
 private:
     Adafruit_MPU6050 mpu;
     sensors_event_t a, g, temp;
+    bool _sensorAvailable = false;
 };

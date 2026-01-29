@@ -29,9 +29,19 @@ A comprehensive, upgradeable ESP32-based 3-axis gimbal control system with web i
 - **Advanced Features**
   - PID-controlled auto-stabilization
   - Smooth servo movements
-  - Configuration persistence (EEPROM/Preferences)
+  - Configuration persistence (LittleFS)
   - Pre-programmed timed moves
   - Configurable from web GUI
+  - **Flat reference reset** - Set any position as new zero/flat
+  - **Hardware button control** - Short press for flat reset, long press for self-test
+  - **Self-test routine** - Automatic servo range verification
+  - **Power-On Self Test (POST)** - Automatic hardware verification at startup
+
+- **Hardware Resilience**
+  - Graceful degradation when sensors fail
+  - Continues operation in manual mode without gyroscope
+  - Real-time hardware status monitoring
+  - Visual warnings for missing hardware
 
 ## 🏗️ Architecture
 

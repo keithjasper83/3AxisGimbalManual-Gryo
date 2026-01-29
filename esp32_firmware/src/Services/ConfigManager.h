@@ -18,6 +18,11 @@ struct AppConfig {
     int yaw_offset;
     int pitch_offset;
     int roll_offset;
+    
+    // Flat position reference (for reset-to-flat feature)
+    float flat_ref_yaw;
+    float flat_ref_pitch;
+    float flat_ref_roll;
 };
 
 class ConfigManager {
