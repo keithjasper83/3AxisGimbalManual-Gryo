@@ -18,9 +18,10 @@ void ConfigManager::resetToDefaults() {
     config.yaw_offset = 0;
     config.pitch_offset = 0;
     config.roll_offset = 0;
-    config.flat_ref_yaw = 0;
-    config.flat_ref_pitch = 0;
-    config.flat_ref_roll = 0;
+    // Use -1.0 as sentinel value for "flat reference not set"
+    config.flat_ref_yaw = -1.0;
+    config.flat_ref_pitch = -1.0;
+    config.flat_ref_roll = -1.0;
     xSemaphoreGive(_mutex);
 }
 

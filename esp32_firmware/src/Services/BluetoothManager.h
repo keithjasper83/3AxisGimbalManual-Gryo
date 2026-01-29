@@ -26,8 +26,8 @@ private:
     BLECharacteristic* _pPositionCharacteristic;
     BLECharacteristic* _pModeCharacteristic;
     BLECharacteristic* _pStatusCharacteristic;
-    bool _deviceConnected;
-    bool _oldDeviceConnected;
+    volatile bool _deviceConnected;  // Accessed from BLE callback task
+    volatile bool _oldDeviceConnected;
 
     class ServerCallbacks : public BLEServerCallbacks {
         BluetoothManager* _manager;

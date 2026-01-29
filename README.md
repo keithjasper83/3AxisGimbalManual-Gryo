@@ -133,7 +133,13 @@ GPIO12       → Pitch Servo Signal
 GPIO14       → Roll Servo Signal
 5V           → Servo VCC (all 3)
 GND          → Servo GND (all 3)
+
+ESP32          Control Button
+GPIO15       → Button (other side to GND)
 ```
+
+**📖 For complete GPIO pin details, see [GPIO Pin Reference Guide](docs/GPIO_PIN_REFERENCE.md)**  
+**🔧 For bench testing procedures, see [Bench Test Guide](docs/BENCH_TEST_GUIDE.md)**
 
 ## 🚀 Installation
 
@@ -435,6 +441,14 @@ The system is designed to be easily upgradeable:
 
 ## 📚 Additional Resources
 
+### Documentation
+- **[GPIO Pin Reference](docs/GPIO_PIN_REFERENCE.md)** - Complete pin configuration and wiring details
+- **[Bench Test Guide](docs/BENCH_TEST_GUIDE.md)** - Step-by-step testing procedures for BLE and servos
+- **[Hardware Setup](docs/HARDWARE_SETUP.md)** - Detailed assembly and wiring instructions
+- **[Bluetooth & Phone Control](docs/BLUETOOTH_AND_PHONE_CONTROL.md)** - BLE API and mobile control guide
+- **[Architecture](docs/ARCHITECTURE.md)** - System design and code structure
+
+### External Resources
 - **PlatformIO**: https://platformio.org/
 - **FastAPI**: https://fastapi.tiangolo.com/
 - **ESP32 Documentation**: https://docs.espressif.com/
