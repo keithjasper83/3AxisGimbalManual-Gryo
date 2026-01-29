@@ -25,5 +25,5 @@ public:
 private:
     Adafruit_MPU6050 mpu;
     sensors_event_t a, g, temp;
-    bool _sensorAvailable;
+    bool _sensorAvailable = false;
 };
