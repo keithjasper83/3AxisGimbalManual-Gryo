@@ -13,12 +13,25 @@ A comprehensive, upgradeable ESP32-based 3-axis gimbal control system with web i
   - Falls back to hotspot (Access Point) mode if connection fails
   - No internet required for operation
 
+- **Bluetooth Low Energy (BLE)**
+  - Direct device-to-device wireless control
+  - Lower power consumption than WiFi
+  - Mobile app integration ready
+  - Real-time position and status updates
+
+- **Phone Gyroscope Control**
+  - Use your phone's motion sensors to control gimbal tilt
+  - Intuitive tilt-to-control interface
+  - Works on iOS and Android browsers
+  - Real-time orientation feedback
+
 - **Real-Time Web Interface**
   - Live gimbal control with sliders
   - Real-time sensor data visualization
   - Timed/pre-programmed moves
   - Responsive design with Tailwind CSS
   - WebSocket-based live updates
+  - Phone gyroscope control integration
 
 - **REST API**
   - Full control via HTTP endpoints
@@ -323,18 +336,42 @@ Settings persist across reboots using ESP32 Preferences:
 
 ## 📱 Mobile App Integration
 
-The system is ready for mobile app integration:
+The system is ready for mobile app integration with multiple control options:
 
-### Option 1: Progressive Web App (PWA)
+### Option 1: Phone Gyroscope Control (Web Interface)
+Control the gimbal by tilting your phone - no app installation required!
+
+1. Open the web interface on your mobile browser
+2. Navigate to the **Phone Gyroscope Control** section
+3. Tap **Enable** and grant motion sensor permission
+4. Tilt your phone to control gimbal angles in real-time
+
+**Supported Browsers**: Safari (iOS 13+), Chrome (Android), Firefox (Android)
+
+### Option 2: Bluetooth BLE Control
+Connect directly to the gimbal via Bluetooth Low Energy:
+
+- **Device Name**: `ESP32_Gimbal`
+- **Service UUID**: `4fafc201-1fb5-459e-8fcc-c5c9c331914b`
+- **Features**: Position control, mode switching, status notifications
+- **Documentation**: See `/docs/BLUETOOTH_AND_PHONE_CONTROL.md`
+
+**Advantages**:
+- No WiFi required
+- Lower latency (<50ms)
+- Lower power consumption
+- Direct device-to-device communication
+
+### Option 3: Progressive Web App (PWA)
 The web interface is mobile-responsive and can be saved as a PWA.
 
-### Option 2: Native App
-Use the REST API and WebSocket endpoints:
-- React Native
-- Flutter
+### Option 4: Native App Development
+Use the REST API, WebSocket, or Bluetooth endpoints:
+- React Native (Web Bluetooth or BLE libraries)
+- Flutter (flutter_blue_plus)
 - Native iOS/Android
 
-Example endpoints are fully documented in `/docs/API.md`.
+Example code and full API documentation in `/docs/BLUETOOTH_AND_PHONE_CONTROL.md` and `/docs/API.md`.
 
 ## 🔐 Security Considerations
 
