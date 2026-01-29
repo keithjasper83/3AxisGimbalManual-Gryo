@@ -252,24 +252,30 @@ GND → Other side of button
 
 ## Security Notes for Bench Testing
 
-### Current Security Status:
-- ❌ No BLE authentication (any device can connect)
-- ❌ No BLE encryption
-- ❌ No command rate limiting
-- ❌ No input sanitization beyond range checks
+### Current Security Status (BLE control interface – bench-test profile only):
+- ❌ No BLE authentication (any nearby device can connect)
+- ❌ No BLE encryption on control characteristics
+- ❌ No command rate limiting (commands can be sent continuously)
+- ❌ Limited input sanitization (range checks only; no per-client authorization)
+- ⚠️ **HIGH RISK if used outside an isolated bench environment**
 
-### For Bench Test:
-✅ **This is acceptable** - Bench testing is in a controlled environment
+### Bench-test usage requirements (temporary, insecure profile):
+- ✅ **Use only on an isolated bench with no untrusted devices in BLE range.**
+- ✅ **Do not connect the ESP32 to any sensitive or production WiFi network while this profile is active.**
+- ✅ **Disable or power down BLE when not actively performing bench tests.**
+- ✅ **Do not reuse this configuration in demos, field tests, or any environment with untrusted users.**
 
-### For Production:
-⚠️ **Would need improvements:**
-- Add BLE pairing/bonding
-- Implement authentication tokens
-- Add command rate limiting
-- Consider encrypted characteristics
+This insecure BLE profile is intended **only** for short-term, controlled bench testing of ESP32 and servo behavior.
+It **must not** be treated as safe or acceptable for any production or network-exposed deployment.
 
-This is documented in `docs/CODE_REVIEW_SUMMARY.md` for future reference.
+### Requirements before enabling BLE control in production or non-isolated environments:
+- ✅ Enforce BLE pairing/bonding and restrict access to authorized devices only
+- ✅ Implement per-command authorization (e.g., authenticated session or signed tokens)
+- ✅ Add command rate limiting and lockout to prevent abuse
+- ✅ Enable encryption for all control characteristics
+- ✅ Extend input validation beyond range checks (reject malformed or unexpected data)
 
+These requirements and the current bench-only limitations are documented in `docs/CODE_REVIEW_SUMMARY.md` for future reference.
 ---
 
 ## Next Steps
