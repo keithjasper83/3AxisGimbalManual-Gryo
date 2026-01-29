@@ -101,7 +101,7 @@ void WebManager::begin() {
     // Run Self Test Endpoint
     _server.on("/api/self-test", HTTP_POST, [this](AsyncWebServerRequest *request) {
         _gimbalController.runSelfTest();
-        request->send(200, "application/json", "{\"status\":\"ok\",\"message\":\"Self-test completed\"}");
+        request->send(200, "application/json", "{\"status\":\"ok\",\"message\":\"Self-test started - check serial console for results\"}");
     });
 
     _server.begin();

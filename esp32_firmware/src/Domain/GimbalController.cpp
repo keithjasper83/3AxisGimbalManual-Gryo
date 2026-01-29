@@ -148,7 +148,12 @@ GimbalPosition GimbalController::getCurrentPosition() {
 }
 
 void GimbalController::center() {
-    setManualPosition(SERVO_CENTER, SERVO_CENTER, SERVO_CENTER);
+    // Center to the stored flat reference position instead of absolute center
+    AppConfig config = _configManager.getConfig();
+    float centerYaw = config.flat_ref_yaw > 0 ? config.flat_ref_yaw : SERVO_CENTER;
+    float centerPitch = config.flat_ref_pitch > 0 ? config.flat_ref_pitch : SERVO_CENTER;
+    float centerRoll = config.flat_ref_roll > 0 ? config.flat_ref_roll : SERVO_CENTER;
+    setManualPosition(centerYaw, centerPitch, centerRoll);
 }
 
 void GimbalController::setFlatReference() {
@@ -209,9 +214,16 @@ void GimbalController::runSelfTest() {
     xSemaphoreGive(_mutex);
     delay(500);
     
-    // Restore original position
+    // Return to flat reference position if set, otherwise original position
+    AppConfig config = _configManager.getConfig();
     xSemaphoreTake(_mutex, portMAX_DELAY);
-    _targetPos = originalPos;
+    if (config.flat_ref_yaw > 0 || config.flat_ref_pitch > 0 || config.flat_ref_roll > 0) {
+        _targetPos.yaw = config.flat_ref_yaw > 0 ? config.flat_ref_yaw : SERVO_CENTER;
+        _targetPos.pitch = config.flat_ref_pitch > 0 ? config.flat_ref_pitch : SERVO_CENTER;
+        _targetPos.roll = config.flat_ref_roll > 0 ? config.flat_ref_roll : SERVO_CENTER;
+    } else {
+        _targetPos = originalPos;
+    }
     xSemaphoreGive(_mutex);
     
     Serial.println("Self-test complete!");
