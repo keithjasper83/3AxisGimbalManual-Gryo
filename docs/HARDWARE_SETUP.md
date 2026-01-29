@@ -59,7 +59,26 @@ Connect three servo motors for 3-axis control:
 - Connect ESP32 GND to power supply GND (common ground)
 - Consider using a capacitor (1000µF) near servos for stability
 
-### 3. Power Supply Setup
+### 3. Control Button (Optional)
+
+Connect a momentary push button for manual control:
+
+| Button Terminal | ESP32 Pin | Notes |
+|----------------|-----------|-------|
+| One side | GPIO 15 | Button input with internal pull-up |
+| Other side | GND | Common ground |
+
+**Button Functions:**
+- **Short Press** (< 3 seconds): Set current position as flat reference
+- **Long Press** (≥ 3 seconds): Run self-test routine
+
+**Notes:**
+- Internal pull-up resistor is enabled (no external resistor needed)
+- Button is active-low (pressed = LOW, released = HIGH)
+- Debouncing is implemented in software (50ms)
+- Button is optional - all functions available via web interface
+
+### 4. Power Supply Setup
 
 #### Option A: Separate Power Supplies
 ```
@@ -79,7 +98,7 @@ GND common to all components
                  └────────────┘
 ```
 
-### 4. Wiring Diagram
+### 5. Wiring Diagram
 
 ```
                     ┌─────────────┐
@@ -93,8 +112,12 @@ GND common to all components
     │ SCL ├─────────┤             │  │  │
     └─────┘         │ GPIO13      ├──┼──┼──→ Yaw Servo
                     │ GPIO12      ├──┼──┼──→ Pitch Servo
-                    │ GPIO14      ├──┘  └──→ Roll Servo
-                    │ VIN (5V)    ├────────→ 5V Power
+                    │ GPIO14      ├──┼──┼──→ Roll Servo
+      Button        │ GPIO15      ├──┘  │
+      ┌──┐          │             │     │
+      │  ├──────────┤ (pull-up)   │     │
+      └──┴──────────┤ GND         │     │
+                    │ VIN (5V)    ├─────┴──→ 5V Power
                     │ GND         ├────────→ GND
                     └─────────────┘
 ```
