@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2024-01-29
+
+### Added
+- **Bluetooth Low Energy (BLE) Support**
+  - New `BluetoothManager` service for BLE communication
+  - BLE device advertising as "ESP32_Gimbal"
+  - BLE characteristics for position control, mode switching, and status updates
+  - Real-time Bluetooth connection status in web interface
+  - Low-latency gimbal control via BLE (<50ms)
+  - Documentation for BLE API and mobile app development
+
+- **Phone Gyroscope Control**
+  - Web interface integration for phone motion sensor control
+  - Real-time gimbal control by tilting your phone
+  - Permission handling for iOS 13+ and Android devices
+  - Visual feedback showing phone orientation (alpha, beta, gamma)
+  - Enable/disable toggle for phone gyroscope control
+  - Automatic mode switching to Manual when enabled
+  - Support for Safari (iOS), Chrome (Android), and Firefox (Android)
+
+- **Documentation**
+  - New comprehensive guide: `docs/BLUETOOTH_AND_PHONE_CONTROL.md`
+  - BLE API reference with UUIDs and data formats
+  - Mobile app development examples (JavaScript, React Native, Flutter)
+  - Phone gyroscope usage instructions
+  - Troubleshooting guide for BLE and phone controls
+
+### Changed
+- Updated `WebManager` to include Bluetooth status in WebSocket broadcasts
+- Enhanced hardware status panel to show Bluetooth connection state
+- Modified `main.cpp` to initialize and handle `BluetoothManager`
+- Updated README.md with new Bluetooth and phone control features
+- Improved mobile app integration documentation
+
+### Technical Details
+- BLE Service UUID: `4fafc201-1fb5-459e-8fcc-c5c9c331914b`
+- Position Control Characteristic: `beb5483e-36e1-4688-b7f5-ea07361b26a8`
+- Mode Control Characteristic: `beb5483e-36e1-4688-b7f5-ea07361b26a9`
+- Status Notification Characteristic: `beb5483e-36e1-4688-b7f5-ea07361b26aa`
+- Phone orientation mapping: Alpha (0-360°) → Yaw, Beta (-180-180°) → Pitch, Gamma (-90-90°) → Roll
+
 ## [1.0.1] - 2024-01-28
 
 ### Security

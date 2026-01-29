@@ -180,8 +180,8 @@ void WebManager::handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
                 // Beta (front-back tilt) -> Pitch
                 // Gamma (left-right tilt) -> Roll
                 float yaw = alpha / 2.0;     // Map 0-360 to 0-180
-                float pitch = map(beta, -180, 180, 0, 180);
-                float roll = map(gamma, -90, 90, 0, 180);
+                float pitch = ((beta + 180.0) / 360.0) * 180.0;  // Map -180 to 180 -> 0 to 180
+                float roll = ((gamma + 90.0) / 180.0) * 180.0;   // Map -90 to 90 -> 0 to 180
                 
                 _gimbalController.setManualPosition(yaw, pitch, roll);
             }
