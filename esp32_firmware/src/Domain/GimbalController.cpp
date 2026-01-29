@@ -150,9 +150,10 @@ GimbalPosition GimbalController::getCurrentPosition() {
 void GimbalController::center() {
     // Center to the stored flat reference position instead of absolute center
     AppConfig config = _configManager.getConfig();
-    float centerYaw = config.flat_ref_yaw > 0 ? config.flat_ref_yaw : SERVO_CENTER;
-    float centerPitch = config.flat_ref_pitch > 0 ? config.flat_ref_pitch : SERVO_CENTER;
-    float centerRoll = config.flat_ref_roll > 0 ? config.flat_ref_roll : SERVO_CENTER;
+    // Use >= 0 to allow flat reference at 0 degrees (sentinel value is -1.0)
+    float centerYaw = config.flat_ref_yaw >= 0 ? config.flat_ref_yaw : SERVO_CENTER;
+    float centerPitch = config.flat_ref_pitch >= 0 ? config.flat_ref_pitch : SERVO_CENTER;
+    float centerRoll = config.flat_ref_roll >= 0 ? config.flat_ref_roll : SERVO_CENTER;
     setManualPosition(centerYaw, centerPitch, centerRoll);
 }
 
@@ -176,6 +177,8 @@ void GimbalController::setFlatReference() {
 
 void GimbalController::runSelfTest() {
     Serial.println("=== Running Gimbal Self-Test ===");
+    Serial.println("WARNING: Self-test will block for 3 seconds.");
+    Serial.println("BLE/WiFi connections may be affected.");
     
     // Test 1: Servo range test
     Serial.println("Test 1: Servo Range Test");
@@ -217,10 +220,11 @@ void GimbalController::runSelfTest() {
     // Return to flat reference position if set, otherwise original position
     AppConfig config = _configManager.getConfig();
     xSemaphoreTake(_mutex, portMAX_DELAY);
-    if (config.flat_ref_yaw > 0 || config.flat_ref_pitch > 0 || config.flat_ref_roll > 0) {
-        _targetPos.yaw = config.flat_ref_yaw > 0 ? config.flat_ref_yaw : SERVO_CENTER;
-        _targetPos.pitch = config.flat_ref_pitch > 0 ? config.flat_ref_pitch : SERVO_CENTER;
-        _targetPos.roll = config.flat_ref_roll > 0 ? config.flat_ref_roll : SERVO_CENTER;
+    // Use >= 0 to check if flat reference is set (sentinel value is -1.0)
+    if (config.flat_ref_yaw >= 0 || config.flat_ref_pitch >= 0 || config.flat_ref_roll >= 0) {
+        _targetPos.yaw = config.flat_ref_yaw >= 0 ? config.flat_ref_yaw : SERVO_CENTER;
+        _targetPos.pitch = config.flat_ref_pitch >= 0 ? config.flat_ref_pitch : SERVO_CENTER;
+        _targetPos.roll = config.flat_ref_roll >= 0 ? config.flat_ref_roll : SERVO_CENTER;
     } else {
         _targetPos = originalPos;
     }
