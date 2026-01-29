@@ -45,7 +45,7 @@ private:
 
     SemaphoreHandle_t _mutex;
 
-    void updateServos();
+    void updateServos(const AppConfig& config);
     void updateAuto(float dt, float gyroYaw, float gyroPitch, float gyroRoll);
     void updateTimedMove();
 };
