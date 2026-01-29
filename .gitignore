@@ -48,4 +48,6 @@ out/
 *.log
 .env
 .env.local
-config.json
+# Ignore config.json at root, but allow the default one in esp32_firmware/data/
+/config.json
+backend/config.json

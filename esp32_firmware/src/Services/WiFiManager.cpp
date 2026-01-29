@@ -1,4 +1,5 @@
 #include "WiFiManager.h"
+#include "../config.h"
 
 WiFiManagerService::WiFiManagerService(ConfigManager& configManager) : _configManager(configManager) {}
 
@@ -11,7 +12,7 @@ void WiFiManagerService::begin() {
         WiFi.begin(config.wifi_ssid.c_str(), config.wifi_password.c_str());
 
         unsigned long start = millis();
-        while (WiFi.status() != WL_CONNECTED && millis() - start < 10000) {
+        while (WiFi.status() != WL_CONNECTED && millis() - start < WIFI_TIMEOUT) {
             delay(100);
             Serial.print(".");
         }

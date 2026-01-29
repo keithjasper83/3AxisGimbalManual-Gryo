@@ -22,7 +22,7 @@ void ConfigManager::resetToDefaults() {
 }
 
 bool ConfigManager::begin() {
-    if (!LittleFS.begin(true)) {
+    if (!LittleFS.begin(false)) {
         Serial.println("LittleFS Mount Failed");
         return false;
     }
@@ -51,9 +51,13 @@ bool ConfigManager::loadConfig() {
     file.close();
 
     if (error) {
-        Serial.println("Failed to read file, using defaults");
+        Serial.println("Failed to read file, using defaults and persisting them");
+        // Release the mutex before calling methods that will lock it again.
         xSemaphoreGive(_mutex);
-        return false;
+        // Ensure we actually revert to defaults and persist them to fix the file.
+        resetToDefaults();
+        bool saved = saveConfig();
+        return saved;
     }
 
     if (doc.containsKey("wifi_ssid")) config.wifi_ssid = doc["wifi_ssid"].as<String>();

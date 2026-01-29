@@ -30,22 +30,24 @@ void GimbalController::begin() {
 }
 
 void GimbalController::update(float dt, float gyroYaw, float gyroPitch, float gyroRoll) {
-    xSemaphoreTake(_mutex, portMAX_DELAY);
-
+    // Get config before taking mutex to avoid lock-order inversion
     AppConfig config = _configManager.getConfig(); // Copy by value
+
+    xSemaphoreTake(_mutex, portMAX_DELAY);
 
     // Update PID tunings
     _pidYaw.setTunings(config.kp, config.ki, config.kd);
     _pidPitch.setTunings(config.kp, config.ki, config.kd);
     _pidRoll.setTunings(config.kp, config.ki, config.kd);
 
+    // Always update timed moves regardless of mode
+    updateTimedMove();
+
     if (config.mode == MODE_AUTO) {
         updateAuto(dt, gyroYaw, gyroPitch, gyroRoll);
-    } else {
-        updateTimedMove();
     }
 
-    updateServos();
+    updateServos(config);
 
     xSemaphoreGive(_mutex);
 }
@@ -81,35 +83,41 @@ void GimbalController::updateTimedMove() {
     _targetPos.roll = _moveStartPos.roll + (_moveEndPos.roll - _moveStartPos.roll) * progress;
 }
 
-void GimbalController::updateServos() {
+void GimbalController::updateServos(const AppConfig& config) {
     // Smoothing
     _currentPos.yaw += (_targetPos.yaw - _currentPos.yaw) * 0.1;
     _currentPos.pitch += (_targetPos.pitch - _currentPos.pitch) * 0.1;
     _currentPos.roll += (_targetPos.roll - _currentPos.roll) * 0.1;
 
-    // Constrain
+    // Constrain logical position
     _currentPos.yaw = constrain(_currentPos.yaw, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE);
     _currentPos.pitch = constrain(_currentPos.pitch, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE);
     _currentPos.roll = constrain(_currentPos.roll, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE);
 
-    _servoYaw.write((int)_currentPos.yaw);
-    _servoPitch.write((int)_currentPos.pitch);
-    _servoRoll.write((int)_currentPos.roll);
+    // Apply configured servo offsets (trim) before writing to hardware, then clamp
+    float yawCommand = constrain(_currentPos.yaw + config.yaw_offset, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE);
+    float pitchCommand = constrain(_currentPos.pitch + config.pitch_offset, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE);
+    float rollCommand = constrain(_currentPos.roll + config.roll_offset, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE);
+
+    _servoYaw.write((int)yawCommand);
+    _servoPitch.write((int)pitchCommand);
+    _servoRoll.write((int)rollCommand);
 }
 
 void GimbalController::setMode(int mode) {
-    // Mode is stored in config, but we might need to reset PIDs
-    // ConfigManager has its own mutex, so we don't need to lock to set config
+    // Take the gimbal mutex first, then access ConfigManager to avoid lock-order inversion
+    xSemaphoreTake(_mutex, portMAX_DELAY);
+
     AppConfig config = _configManager.getConfig();
     config.mode = mode;
     _configManager.updateConfig(config);
 
-    xSemaphoreTake(_mutex, portMAX_DELAY);
     if (mode == MODE_MANUAL) {
         _pidYaw.reset();
         _pidPitch.reset();
         _pidRoll.reset();
     }
+
     xSemaphoreGive(_mutex);
 }
 

@@ -19,12 +19,14 @@ void setup() {
 
     // Initialize Config
     if (!configManager.begin()) {
-        Serial.println("Config Manager Failed!");
+        Serial.println("Config Manager Failed! System cannot continue.");
+        while(true) { delay(1000); } // Halt - LittleFS is required for web interface
     }
 
     // Initialize Sensors
     if (!sensorManager.begin()) {
-        Serial.println("Sensor Manager Failed!");
+        Serial.println("Sensor Manager Failed! Auto mode will not work properly.");
+        // Continue - manual mode can still work
     }
     
     // Initialize Gimbal Controller (Servos)
@@ -56,6 +58,11 @@ void loop() {
     
     // Update Servos / Control Loop
     if (currentTime - lastServoUpdate >= SERVO_UPDATE_RATE) {
+        // Initialize lastServoUpdate on first use to avoid a large initial dt
+        if (lastServoUpdate == 0) {
+            lastServoUpdate = currentTime;
+        }
+
         float dt = (currentTime - lastServoUpdate) / 1000.0;
 
         // Get Gyro Data for PID (Simplified)

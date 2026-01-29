@@ -24,7 +24,8 @@ void WebManager::begin() {
         doc["wifi_ssid"] = config.wifi_ssid;
         // doc["wifi_password"] = config.wifi_password; // Security risk to send back password
         doc["hotspot_ssid"] = config.hotspot_ssid;
-        doc["hotspot_password"] = config.hotspot_password;
+        // Do not expose hotspot password; instead, indicate whether a password is set
+        doc["hotspot_password_set"] = !config.hotspot_password.isEmpty();
         doc["mode"] = config.mode;
         doc["kp"] = config.kp;
         doc["ki"] = config.ki;
@@ -40,8 +41,18 @@ void WebManager::begin() {
 
     _server.on("/api/config", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL,
         [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+            // Require the full body to arrive in a single chunk to avoid parsing partial JSON.
+            if (index != 0 || len != total) {
+                request->send(400, "application/json", "{\"error\":\"Request body must be sent in a single chunk\"}");
+                return;
+            }
+
             StaticJsonDocument<1024> doc;
-            deserializeJson(doc, data, len);
+            DeserializationError error = deserializeJson(doc, data, len);
+            if (error) {
+                request->send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
+                return;
+            }
 
             AppConfig config = _configManager.getConfig();
             if(doc.containsKey("wifi_ssid")) config.wifi_ssid = doc["wifi_ssid"].as<String>();
@@ -82,11 +93,20 @@ void WebManager::onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *
 void WebManager::handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
     AwsFrameInfo *info = (AwsFrameInfo*)arg;
     if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
-        data[len] = 0;
         StaticJsonDocument<512> doc;
-        deserializeJson(doc, data);
+        DeserializationError error = deserializeJson(doc, data, len);
+        if (error) {
+            // Invalid JSON; ignore this message safely.
+            return;
+        }
 
-        const char* cmd = doc["cmd"];
+        JsonVariant cmdVar = doc["cmd"];
+        if (!cmdVar.is<const char*>()) {
+            // Missing or non-string command; ignore this message safely.
+            return;
+        }
+
+        const char* cmd = cmdVar.as<const char*>();
         if (strcmp(cmd, "setPosition") == 0) {
             _gimbalController.setManualPosition(doc["yaw"], doc["pitch"], doc["roll"]);
         } else if (strcmp(cmd, "setMode") == 0) {
@@ -102,6 +122,7 @@ void WebManager::handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
         } else if (strcmp(cmd, "center") == 0) {
             _gimbalController.center();
         }
+        // Unknown commands are safely ignored
     }
 }
 
