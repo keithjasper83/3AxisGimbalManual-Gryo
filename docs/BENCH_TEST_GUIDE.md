@@ -530,5 +530,5 @@ curl -X POST http://192.168.4.1/api/center
 ---
 
 **Document Version**: 1.0  
-**Date**: January 2024  
+**Date**: January 2026  
 **Tested With**: ESP32 DevKit v1, Firmware v1.2
