@@ -334,10 +334,11 @@ All pins avoid:
 - Length checks on received data - ✅ Implemented
 
 **Security Considerations:**
-⚠️ **No authentication or encryption** - Documented as intended for hobbyist use
-- Any device in range can connect and control
-- Consider adding BLE pairing for production use
-- No rate limiting on commands
+⚠️ **No authentication or encryption in current bench-test firmware**
+- Current configuration is intended **only for isolated bench testing / hobbyist experiments** and is **not safe for production or semi-public environments**
+- For production builds, **require BLE pairing/bonding and an application-layer authorization check** before accepting write requests on control characteristics
+- Implement **rate limiting and basic abuse detection** on incoming commands (e.g., max commands per second, disconnect or ignore on sustained abuse)
+- When security is disabled, any device in radio range can connect and control the gimbal
 
 ---
 
