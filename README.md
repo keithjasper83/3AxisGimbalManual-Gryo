@@ -129,11 +129,15 @@ GND          → Servo GND (all 3)
    #define WIFI_PASSWORD "YourWiFiPassword"
    ```
 
-3. **Upload Firmware**
+3. **Upload Firmware & Filesystem**
    ```bash
    cd esp32_firmware
+   # Upload the filesystem (HTML/CSS/Config)
+   pio run --target uploadfs
+   # Upload the firmware
    pio run --target upload
-   pio device monitor  # View serial output
+   # Monitor output
+   pio device monitor
    ```
 
 4. **Access Web Interface**

@@ -1,0 +1,13 @@
+{
+  "wifi_ssid": "",
+  "wifi_password": "",
+  "hotspot_ssid": "Gimbal_AP",
+  "hotspot_password": "CHANGE_ME_BEFORE_USE",
+  "mode": 0,
+  "kp": 2.0,
+  "ki": 0.5,
+  "kd": 1.0,
+  "yaw_offset": 0,
+  "pitch_offset": 0,
+  "roll_offset": 0
+}

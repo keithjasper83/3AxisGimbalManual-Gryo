@@ -66,43 +66,48 @@ Each major functionality is encapsulated in loosely-coupled services:
 
 ```
 esp32_firmware/
+├── data/
+│   ├── config.json           # Runtime configuration
+│   └── index.html            # Single Page Application Frontend
 ├── src/
-│   └── main.cpp              # Main application logic
+│   ├── Domain/
+│   │   ├── GimbalController.cpp # Logic for movement and modes
+│   │   └── PIDController.cpp    # Control loop logic
+│   ├── Infrastructure/
+│   │   └── SensorManager.cpp    # MPU6050 Hardware Interface
+│   ├── Services/
+│   │   ├── ConfigManager.cpp    # JSON/LittleFS Persistence
+│   │   ├── WebManager.cpp       # WebServer & WebSocket
+│   │   └── WiFiManager.cpp      # Network Connectivity
+│   └── main.cpp              # Dependency Injection & Setup
 ├── include/
-│   └── config.h              # Configuration constants
+│   └── config.h              # Hardware Pinout & Constants
 └── platformio.ini            # Build configuration
 ```
 
 #### Key Components
 
-1. **WiFiManager**
-   - Attempts connection to configured network
-   - Falls back to hotspot mode on failure
-   - Manages connection state
+1. **ConfigManager (Service)**
+   - Handles loading/saving `config.json` via LittleFS.
+   - Provides configuration object to other services.
 
-2. **SensorManager**
-   - Reads MPU6050 at configured rate
-   - Filters sensor data
-   - Provides gyro and accelerometer data
+2. **WiFiManager (Service)**
+   - Connects to WiFi or creates Hotspot based on config.
+   - Manages network state.
 
-3. **ServoController**
-   - Controls three servo motors
-   - Implements smooth movement
-   - Enforces position limits
+3. **WebManager (Service)**
+   - Serves the frontend (`index.html`) from LittleFS.
+   - Handles REST API (`/api/config`) and WebSocket communication.
+   - Broadcasts real-time state to connected clients.
 
-4. **WebServer**
-   - Serves HTML/CSS/JS interface
-   - Handles REST API endpoints
-   - Manages WebSocket connections
+4. **GimbalController (Domain)**
+   - **Core Logic**: Manages Manual, Auto, and Timed Move modes.
+   - **PID Control**: Uses `PIDController` for stabilization.
+   - **Servo Control**: smooths and writes to servos.
 
-5. **ModeController**
-   - Manual mode: Direct position control
-   - Auto mode: PID-based stabilization
-
-6. **MoveExecutor**
-   - Executes timed movements
-   - Implements linear interpolation
-   - Manages movement queue
+5. **SensorManager (Infrastructure)**
+   - Abstraction over `Adafruit_MPU6050`.
+   - Returns normalized sensor data.
 
 ### FastAPI Backend
 
