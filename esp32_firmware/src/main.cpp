@@ -59,11 +59,12 @@ void loop() {
     // Update Servos / Control Loop
     if (currentTime - lastServoUpdate >= SERVO_UPDATE_RATE) {
         // Initialize lastServoUpdate on first use to avoid a large initial dt
+        float dt;
         if (lastServoUpdate == 0) {
-            lastServoUpdate = currentTime;
+            dt = SERVO_UPDATE_RATE / 1000.0; // Use the expected update rate for first iteration
+        } else {
+            dt = (currentTime - lastServoUpdate) / 1000.0;
         }
-
-        float dt = (currentTime - lastServoUpdate) / 1000.0;
 
         // Get Gyro Data for PID (Simplified)
         // Note: gyro returns rad/s. Multiply by dt to get delta angle in radians.

@@ -26,7 +26,8 @@ void GimbalController::begin() {
     _servoPitch.attach(SERVO_PIN_PITCH, 500, 2500);
     _servoRoll.attach(SERVO_PIN_ROLL, 500, 2500);
 
-    updateServos();
+    AppConfig config = _configManager.getConfig();
+    updateServos(config);
 }
 
 void GimbalController::update(float dt, float gyroYaw, float gyroPitch, float gyroRoll) {
@@ -105,19 +106,18 @@ void GimbalController::updateServos(const AppConfig& config) {
 }
 
 void GimbalController::setMode(int mode) {
-    // Take the gimbal mutex first, then access ConfigManager to avoid lock-order inversion
-    xSemaphoreTake(_mutex, portMAX_DELAY);
-
+    // Get config and update it WITHOUT holding gimbal mutex to avoid lock-order inversion
     AppConfig config = _configManager.getConfig();
     config.mode = mode;
     _configManager.updateConfig(config);
 
+    // Now take gimbal mutex to reset PIDs if needed
+    xSemaphoreTake(_mutex, portMAX_DELAY);
     if (mode == MODE_MANUAL) {
         _pidYaw.reset();
         _pidPitch.reset();
         _pidRoll.reset();
     }
-
     xSemaphoreGive(_mutex);
 }
 

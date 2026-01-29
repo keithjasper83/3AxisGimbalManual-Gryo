@@ -108,17 +108,26 @@ void WebManager::handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
 
         const char* cmd = cmdVar.as<const char*>();
         if (strcmp(cmd, "setPosition") == 0) {
-            _gimbalController.setManualPosition(doc["yaw"], doc["pitch"], doc["roll"]);
+            if (doc.containsKey("yaw") && doc.containsKey("pitch") && doc.containsKey("roll")) {
+                _gimbalController.setManualPosition(doc["yaw"], doc["pitch"], doc["roll"]);
+            }
         } else if (strcmp(cmd, "setMode") == 0) {
-            _gimbalController.setMode(doc["mode"]);
+            if (doc.containsKey("mode")) {
+                _gimbalController.setMode(doc["mode"]);
+            }
         } else if (strcmp(cmd, "startTimedMove") == 0) {
-             GimbalPosition endPos;
-             endPos.yaw = doc["endYaw"];
-             endPos.pitch = doc["endPitch"];
-             endPos.roll = doc["endRoll"];
-             _gimbalController.startTimedMove(doc["duration"], endPos);
+            if (doc.containsKey("duration") && doc.containsKey("endYaw") && 
+                doc.containsKey("endPitch") && doc.containsKey("endRoll")) {
+                GimbalPosition endPos;
+                endPos.yaw = doc["endYaw"];
+                endPos.pitch = doc["endPitch"];
+                endPos.roll = doc["endRoll"];
+                _gimbalController.startTimedMove(doc["duration"], endPos);
+            }
         } else if (strcmp(cmd, "setAutoTarget") == 0) {
-            _gimbalController.setAutoTarget(doc["yaw"], doc["pitch"], doc["roll"]);
+            if (doc.containsKey("yaw") && doc.containsKey("pitch") && doc.containsKey("roll")) {
+                _gimbalController.setAutoTarget(doc["yaw"], doc["pitch"], doc["roll"]);
+            }
         } else if (strcmp(cmd, "center") == 0) {
             _gimbalController.center();
         }
