@@ -2,6 +2,7 @@
 #include "Services/ConfigManager.h"
 #include "Services/WiFiManager.h"
 #include "Services/WebManager.h"
+#include "Services/BluetoothManager.h"
 #include "Domain/GimbalController.h"
 #include "Infrastructure/SensorManager.h"
 #include "config.h"
@@ -12,6 +13,7 @@ WiFiManagerService wifiManager(configManager);
 SensorManager sensorManager;
 GimbalController gimbalController(configManager);
 WebManager webManager(configManager, gimbalController, sensorManager);
+BluetoothManager bluetoothManager(gimbalController);
 
 // Button state tracking
 unsigned long buttonPressStart = 0;
@@ -99,6 +101,12 @@ void setup() {
     
     // Initialize Web Manager
     webManager.begin();
+    
+    // Initialize Bluetooth
+    bluetoothManager.begin();
+    
+    // Connect Bluetooth Manager to Web Manager
+    webManager.setBluetoothManager(&bluetoothManager);
 
     Serial.println("System Ready!");
 }
@@ -109,9 +117,11 @@ void loop() {
     static unsigned long lastServoUpdate = 0;
     static unsigned long lastWSUpdate = 0;
     static unsigned long lastButtonCheck = 0;
+    static unsigned long lastBTUpdate = 0;
     
     wifiManager.handle();
     webManager.handle();
+    bluetoothManager.handle();
     
     // Handle button input
     if (currentTime - lastButtonCheck >= 10) { // Check button every 10ms
@@ -155,5 +165,11 @@ void loop() {
     if (currentTime - lastWSUpdate >= WEBSOCKET_UPDATE_RATE) {
         webManager.broadcastStatus();
         lastWSUpdate = currentTime;
+    }
+    
+    // Bluetooth Status Update
+    if (currentTime - lastBTUpdate >= WEBSOCKET_UPDATE_RATE) {
+        bluetoothManager.updateStatus();
+        lastBTUpdate = currentTime;
     }
 }

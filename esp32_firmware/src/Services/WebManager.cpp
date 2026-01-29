@@ -1,9 +1,11 @@
 #include "WebManager.h"
+#include "BluetoothManager.h"
 
 WebManager::WebManager(ConfigManager& configManager, GimbalController& gimbalController, SensorManager& sensorManager)
     : _configManager(configManager),
       _gimbalController(gimbalController),
       _sensorManager(sensorManager),
+      _bluetoothManager(nullptr),
       _server(HTTP_PORT),
       _ws("/ws")
 {}
@@ -107,6 +109,10 @@ void WebManager::begin() {
     _server.begin();
 }
 
+void WebManager::setBluetoothManager(BluetoothManager* bluetoothManager) {
+    _bluetoothManager = bluetoothManager;
+}
+
 void WebManager::handle() {
     _ws.cleanupClients();
 }
@@ -161,6 +167,24 @@ void WebManager::handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
             _gimbalController.setFlatReference();
         } else if (strcmp(cmd, "runSelfTest") == 0) {
             _gimbalController.runSelfTest();
+        } else if (strcmp(cmd, "setPhoneGyro") == 0) {
+            // Handle phone gyroscope data
+            if (doc.containsKey("alpha") && doc.containsKey("beta") && doc.containsKey("gamma")) {
+                // Phone orientation: alpha (z-axis), beta (x-axis), gamma (y-axis)
+                float alpha = doc["alpha"];  // 0 to 360
+                float beta = doc["beta"];    // -180 to 180
+                float gamma = doc["gamma"];  // -90 to 90
+                
+                // Map phone orientation to gimbal position
+                // Alpha (compass heading) -> Yaw
+                // Beta (front-back tilt) -> Pitch
+                // Gamma (left-right tilt) -> Roll
+                float yaw = alpha / 2.0;     // Map 0-360 to 0-180
+                float pitch = map(beta, -180, 180, 0, 180);
+                float roll = map(gamma, -90, 90, 0, 180);
+                
+                _gimbalController.setManualPosition(yaw, pitch, roll);
+            }
         }
         // Unknown commands are safely ignored
     }
@@ -184,6 +208,7 @@ void WebManager::broadcastStatus() {
     doc["sensors"]["gyro"]["z"] = sensors.gyroZ;
     
     doc["hardware"]["sensor_available"] = _sensorManager.isAvailable();
+    doc["hardware"]["bluetooth_connected"] = _bluetoothManager ? _bluetoothManager->isConnected() : false;
 
     String output;
     serializeJson(doc, output);

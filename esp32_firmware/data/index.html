@@ -206,6 +206,10 @@
                             <span id="hw-sensor-status" class="px-3 py-1 rounded text-sm bg-gray-700">Unknown</span>
                         </div>
                         <div class="flex justify-between items-center">
+                            <span class="text-gray-300">Bluetooth:</span>
+                            <span id="hw-bluetooth-status" class="px-3 py-1 rounded text-sm bg-gray-700">Disconnected</span>
+                        </div>
+                        <div class="flex justify-between items-center">
                             <span class="text-gray-300">Servo Controllers:</span>
                             <span class="px-3 py-1 rounded text-sm bg-green-600">Online</span>
                         </div>
@@ -232,6 +236,44 @@
                             🔧 Run Self-Test
                         </button>
                         <p class="text-xs text-gray-400 -mt-1">Tests servo range and system functionality</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Phone Gyroscope Control -->
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">📱 Phone Gyroscope Control</h2>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-300">Use your phone's motion sensors to control the gimbal</p>
+                            <p class="text-xs text-gray-500 mt-1">Tilt your phone to control tilt angles in real-time</p>
+                        </div>
+                        <button onclick="togglePhoneGyro()" id="phoneGyroBtn" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded transition font-semibold">
+                            Enable
+                        </button>
+                    </div>
+                    <div id="phoneGyroStatus" class="hidden">
+                        <div class="mt-4 p-3 bg-blue-900 border border-blue-600 rounded text-sm">
+                            <strong>📱 Active:</strong> <span id="phoneGyroStatusText">Receiving motion data...</span>
+                        </div>
+                        <div class="mt-3 grid grid-cols-3 gap-2 text-xs">
+                            <div class="text-center">
+                                <div class="text-gray-400">Alpha (Z)</div>
+                                <div id="phone-alpha" class="font-mono text-green-400">0°</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-gray-400">Beta (X)</div>
+                                <div id="phone-beta" class="font-mono text-blue-400">0°</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-gray-400">Gamma (Y)</div>
+                                <div id="phone-gamma" class="font-mono text-purple-400">0°</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="phoneGyroError" class="hidden mt-4 p-3 bg-red-900 border border-red-600 rounded text-sm">
+                        <strong>❌ Error:</strong> <span id="phoneGyroErrorText"></span>
                     </div>
                 </div>
             </div>
@@ -489,6 +531,7 @@
             // Update Hardware Status
             if (data.hardware) {
                 const sensorStatus = document.getElementById('hw-sensor-status');
+                const btStatus = document.getElementById('hw-bluetooth-status');
                 const hwWarning = document.getElementById('hw-warning');
                 const hwWarningText = document.getElementById('hw-warning-text');
                 
@@ -503,6 +546,16 @@
                     sensorStatus.classList.add('bg-red-600');
                     hwWarning.classList.remove('hidden');
                     hwWarningText.innerText = 'MPU6050 sensor not detected. Auto stabilization mode will not work. Manual control is still available.';
+                }
+                
+                if (data.hardware.bluetooth_connected) {
+                    btStatus.innerText = 'Connected';
+                    btStatus.classList.remove('bg-red-600', 'bg-gray-700');
+                    btStatus.classList.add('bg-green-600');
+                } else {
+                    btStatus.innerText = 'Disconnected';
+                    btStatus.classList.remove('bg-green-600', 'bg-red-600');
+                    btStatus.classList.add('bg-gray-700');
                 }
             }
         }
@@ -656,6 +709,105 @@
                 msg.innerText = "You are on the latest version.";
                 msg.classList.replace('text-yellow-400', 'text-green-400');
             }, 1500);
+        }
+
+        // --- Phone Gyroscope Control ---
+        let phoneGyroEnabled = false;
+        let phoneGyroHandler = null;
+
+        function togglePhoneGyro() {
+            if (!phoneGyroEnabled) {
+                enablePhoneGyro();
+            } else {
+                disablePhoneGyro();
+            }
+        }
+
+        function enablePhoneGyro() {
+            // Check if DeviceOrientation API is available
+            if (!window.DeviceOrientationEvent) {
+                showPhoneGyroError('Device orientation not supported on this device/browser');
+                return;
+            }
+
+            // Request permission on iOS 13+
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            startPhoneGyro();
+                        } else {
+                            showPhoneGyroError('Permission denied for device orientation');
+                        }
+                    })
+                    .catch(err => {
+                        showPhoneGyroError('Error requesting permission: ' + err.message);
+                    });
+            } else {
+                // Non-iOS devices don't need permission
+                startPhoneGyro();
+            }
+        }
+
+        function startPhoneGyro() {
+            phoneGyroEnabled = true;
+            
+            // Update UI
+            document.getElementById('phoneGyroBtn').innerText = 'Disable';
+            document.getElementById('phoneGyroBtn').classList.replace('bg-blue-600', 'bg-red-600');
+            document.getElementById('phoneGyroBtn').classList.replace('hover:bg-blue-700', 'hover:bg-red-700');
+            document.getElementById('phoneGyroStatus').classList.remove('hidden');
+            document.getElementById('phoneGyroError').classList.add('hidden');
+            
+            // Set mode to Manual
+            if (currentMode !== 0) {
+                setMode(0);
+            }
+
+            // Start listening to device orientation
+            phoneGyroHandler = (event) => {
+                const alpha = event.alpha || 0;  // Z-axis (0-360)
+                const beta = event.beta || 0;    // X-axis (-180 to 180)
+                const gamma = event.gamma || 0;  // Y-axis (-90 to 90)
+
+                // Update display
+                document.getElementById('phone-alpha').innerText = alpha.toFixed(1) + '°';
+                document.getElementById('phone-beta').innerText = beta.toFixed(1) + '°';
+                document.getElementById('phone-gamma').innerText = gamma.toFixed(1) + '°';
+
+                // Send to gimbal via WebSocket
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    sendCmd({
+                        cmd: 'setPhoneGyro',
+                        alpha: alpha,
+                        beta: beta,
+                        gamma: gamma
+                    });
+                }
+            };
+
+            window.addEventListener('deviceorientation', phoneGyroHandler, true);
+        }
+
+        function disablePhoneGyro() {
+            phoneGyroEnabled = false;
+
+            // Update UI
+            document.getElementById('phoneGyroBtn').innerText = 'Enable';
+            document.getElementById('phoneGyroBtn').classList.replace('bg-red-600', 'bg-blue-600');
+            document.getElementById('phoneGyroBtn').classList.replace('hover:bg-red-700', 'hover:bg-blue-700');
+            document.getElementById('phoneGyroStatus').classList.add('hidden');
+
+            // Stop listening
+            if (phoneGyroHandler) {
+                window.removeEventListener('deviceorientation', phoneGyroHandler, true);
+                phoneGyroHandler = null;
+            }
+        }
+
+        function showPhoneGyroError(message) {
+            document.getElementById('phoneGyroError').classList.remove('hidden');
+            document.getElementById('phoneGyroErrorText').innerText = message;
         }
     </script>
 </body>
