@@ -1,5 +1,5 @@
 #include "WiFiManager.h"
-#include "../config.h"
+#include "config.h"
 
 WiFiManagerService::WiFiManagerService(ConfigManager& configManager) : _configManager(configManager) {}
 
