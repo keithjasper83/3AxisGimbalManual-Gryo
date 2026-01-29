@@ -29,6 +29,14 @@ void BluetoothManager::PositionCallbacks::onWrite(BLECharacteristic* pCharacteri
         memcpy(&pitch, &value[4], 4);
         memcpy(&roll, &value[8], 4);
         
+        // Validate ranges (0-180 degrees)
+        if (yaw < 0.0f || yaw > 180.0f || 
+            pitch < 0.0f || pitch > 180.0f || 
+            roll < 0.0f || roll > 180.0f) {
+            Serial.println("BLE Position: Invalid values, ignoring");
+            return;
+        }
+        
         Serial.printf("BLE Position: Yaw=%.1f, Pitch=%.1f, Roll=%.1f\n", yaw, pitch, roll);
         _manager->_gimbalController.setManualPosition(yaw, pitch, roll);
     }
@@ -39,6 +47,11 @@ void BluetoothManager::ModeCallbacks::onWrite(BLECharacteristic* pCharacteristic
     
     if (value.length() == 1) {
         int mode = value[0];
+        // Validate mode (0 = Manual, 1 = Auto)
+        if (mode != 0 && mode != 1) {
+            Serial.printf("BLE Mode Change: Invalid mode %d, ignoring\n", mode);
+            return;
+        }
         Serial.printf("BLE Mode Change: %d\n", mode);
         _manager->_gimbalController.setMode(mode);
     }
@@ -86,7 +99,7 @@ void BluetoothManager::begin() {
     pAdvertising->addServiceUUID(SERVICE_UUID);
     pAdvertising->setScanResponse(true);
     pAdvertising->setMinPreferred(0x06);
-    pAdvertising->setMinPreferred(0x12);
+    pAdvertising->setMaxPreferred(0x12);  // Fixed: was setMinPreferred
     BLEDevice::startAdvertising();
     
     Serial.println("Bluetooth BLE service started - Advertising as 'ESP32_Gimbal'");
@@ -95,10 +108,14 @@ void BluetoothManager::begin() {
 void BluetoothManager::handle() {
     // Handle connection state changes
     if (!_deviceConnected && _oldDeviceConnected) {
-        delay(500); // Give the bluetooth stack time to get ready
-        _pServer->startAdvertising();
-        Serial.println("Start advertising");
-        _oldDeviceConnected = _deviceConnected;
+        // Device disconnected - restart advertising after brief pause
+        static unsigned long lastDisconnect = 0;
+        if (millis() - lastDisconnect > 500) {
+            _pServer->startAdvertising();
+            Serial.println("Start advertising");
+            _oldDeviceConnected = _deviceConnected;
+            lastDisconnect = millis();
+        }
     }
     
     if (_deviceConnected && !_oldDeviceConnected) {

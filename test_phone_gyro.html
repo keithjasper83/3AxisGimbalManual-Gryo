@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phone Gyroscope Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .container {
+            background: #2a2a2a;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #4ade80;
+        }
+        .btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .btn-enable {
+            background: #2563eb;
+            color: white;
+        }
+        .btn-disable {
+            background: #ef4444;
+            color: white;
+        }
+        .status {
+            padding: 20px;
+            background: #374151;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .value-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .value-box {
+            text-align: center;
+            padding: 15px;
+            background: #1f2937;
+            border-radius: 5px;
+        }
+        .value-label {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-bottom: 5px;
+        }
+        .value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .alpha { color: #4ade80; }
+        .beta { color: #60a5fa; }
+        .gamma { color: #c084fc; }
+        .error {
+            background: #7f1d1d;
+            border: 2px solid #ef4444;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .info {
+            background: #1e3a8a;
+            border: 2px solid #3b82f6;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 Phone Gyroscope Test</h1>
+        
+        <div class="info">
+            <strong>Instructions:</strong>
+            <ul>
+                <li>This page tests your phone's motion sensors</li>
+                <li>Works on mobile devices only (phones/tablets)</li>
+                <li>iOS 13+ requires permission</li>
+                <li>Hold phone upright for best results</li>
+            </ul>
+        </div>
+
+        <button id="enableBtn" class="btn btn-enable">Enable Gyroscope</button>
+        
+        <div id="status" class="status hidden">
+            <h3>📡 Active - Receiving Data</h3>
+            <div class="value-grid">
+                <div class="value-box">
+                    <div class="value-label">Alpha (Z)</div>
+                    <div class="value alpha" id="alpha">0°</div>
+                    <div class="value-label" style="margin-top: 5px;">Compass</div>
+                </div>
+                <div class="value-box">
+                    <div class="value-label">Beta (X)</div>
+                    <div class="value beta" id="beta">0°</div>
+                    <div class="value-label" style="margin-top: 5px;">Tilt F/B</div>
+                </div>
+                <div class="value-box">
+                    <div class="value-label">Gamma (Y)</div>
+                    <div class="value gamma" id="gamma">0°</div>
+                    <div class="value-label" style="margin-top: 5px;">Tilt L/R</div>
+                </div>
+            </div>
+            <div style="margin-top: 20px; text-align: center; color: #9ca3af; font-size: 14px;">
+                <div>Tilt your phone to see values change</div>
+                <div style="margin-top: 10px;">
+                    <span style="color: #4ade80;">●</span> Alpha: 0-360° (rotation around Z)
+                    <br>
+                    <span style="color: #60a5fa;">●</span> Beta: -180-180° (tilt front/back)
+                    <br>
+                    <span style="color: #c084fc;">●</span> Gamma: -90-90° (tilt left/right)
+                </div>
+            </div>
+        </div>
+        
+        <div id="error" class="error hidden">
+            <strong>❌ Error:</strong> <span id="errorMsg"></span>
+        </div>
+        
+        <div style="margin-top: 30px; padding: 15px; background: #374151; border-radius: 5px; font-size: 14px;">
+            <strong>Browser Support:</strong>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>✅ Safari on iOS 13+</li>
+                <li>✅ Chrome on Android</li>
+                <li>✅ Firefox on Android</li>
+                <li>❌ Desktop browsers (no motion sensors)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let gyroEnabled = false;
+        let gyroHandler = null;
+
+        const enableBtn = document.getElementById('enableBtn');
+        const statusDiv = document.getElementById('status');
+        const errorDiv = document.getElementById('error');
+        const errorMsg = document.getElementById('errorMsg');
+        const alphaEl = document.getElementById('alpha');
+        const betaEl = document.getElementById('beta');
+        const gammaEl = document.getElementById('gamma');
+
+        enableBtn.addEventListener('click', () => {
+            if (!gyroEnabled) {
+                enableGyro();
+            } else {
+                disableGyro();
+            }
+        });
+
+        function enableGyro() {
+            // Check if API is available
+            if (!window.DeviceOrientationEvent) {
+                showError('DeviceOrientation API not supported on this device/browser');
+                return;
+            }
+
+            // Request permission on iOS 13+
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            startGyro();
+                        } else {
+                            showError('Permission denied for motion sensors');
+                        }
+                    })
+                    .catch(err => {
+                        showError('Error requesting permission: ' + (err.message || String(err)));
+                    });
+            } else {
+                // Non-iOS devices
+                startGyro();
+            }
+        }
+
+        function startGyro() {
+            gyroEnabled = true;
+            
+            // Update UI
+            enableBtn.textContent = 'Disable Gyroscope';
+            enableBtn.className = 'btn btn-disable';
+            statusDiv.classList.remove('hidden');
+            errorDiv.classList.add('hidden');
+
+            // Start listening
+            gyroHandler = (event) => {
+                const alpha = event.alpha || 0;
+                const beta = event.beta || 0;
+                const gamma = event.gamma || 0;
+
+                alphaEl.textContent = alpha.toFixed(1) + '°';
+                betaEl.textContent = beta.toFixed(1) + '°';
+                gammaEl.textContent = gamma.toFixed(1) + '°';
+            };
+
+            window.addEventListener('deviceorientation', gyroHandler, true);
+        }
+
+        function disableGyro() {
+            gyroEnabled = false;
+
+            // Update UI
+            enableBtn.textContent = 'Enable Gyroscope';
+            enableBtn.className = 'btn btn-enable';
+            statusDiv.classList.add('hidden');
+
+            // Stop listening
+            if (gyroHandler) {
+                window.removeEventListener('deviceorientation', gyroHandler, true);
+                gyroHandler = null;
+            }
+        }
+
+        function showError(message) {
+            errorMsg.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+
+        // Check for mobile device on load
+        window.addEventListener('load', () => {
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if (!isMobile) {
+                showError('This test works best on mobile devices (phones/tablets). Desktop browsers typically do not have motion sensors.');
+            }
+        });
+    </script>
+</body>
+</html>

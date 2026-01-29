@@ -28,7 +28,26 @@ The gimbal now supports Bluetooth Low Energy (BLE) for wireless control without 
 - **Real-time Control**: Low-latency gimbal position control
 - **Status Updates**: Automatic position and mode notifications
 
-### Connecting via Bluetooth
+### Security Considerations
+
+**Important**: The current BLE implementation does not include authentication or pairing requirements. This means:
+
+- Any device within Bluetooth range can connect and control the gimbal
+- Commands are not encrypted or authenticated
+- This is suitable for hobbyist/educational use in controlled environments
+
+**For production or security-sensitive applications**, consider:
+
+1. Implementing BLE pairing/bonding requirements
+2. Adding application-level authentication tokens
+3. Using encrypted characteristics
+4. Implementing command validation and rate limiting
+
+See the "Future Enhancements" section for planned security features.
+
+---
+
+## Connecting via Bluetooth
 
 #### Using a Mobile Device
 

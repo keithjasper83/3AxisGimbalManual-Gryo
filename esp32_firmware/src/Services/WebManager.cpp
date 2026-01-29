@@ -175,13 +175,21 @@ void WebManager::handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
                 float beta = doc["beta"];    // -180 to 180
                 float gamma = doc["gamma"];  // -90 to 90
                 
+                // Validate input ranges
+                if (alpha < 0.0f || alpha > 360.0f ||
+                    beta < -180.0f || beta > 180.0f ||
+                    gamma < -90.0f || gamma > 90.0f) {
+                    // Invalid values, ignore
+                    return;
+                }
+                
                 // Map phone orientation to gimbal position
-                // Alpha (compass heading) -> Yaw
-                // Beta (front-back tilt) -> Pitch
-                // Gamma (left-right tilt) -> Roll
-                float yaw = alpha / 2.0;     // Map 0-360 to 0-180
-                float pitch = ((beta + 180.0) / 360.0) * 180.0;  // Map -180 to 180 -> 0 to 180
-                float roll = ((gamma + 90.0) / 180.0) * 180.0;   // Map -90 to 90 -> 0 to 180
+                // Alpha (compass heading) -> Yaw: 0-360° maps to 0-180°
+                // Beta (front-back tilt) -> Pitch: -180 to 180° maps to 0-180°
+                // Gamma (left-right tilt) -> Roll: -90 to 90° maps to 0-180°
+                float yaw = alpha / 2.0f;
+                float pitch = ((beta + 180.0f) / 360.0f) * 180.0f;
+                float roll = ((gamma + 90.0f) / 180.0f) * 180.0f;
                 
                 _gimbalController.setManualPosition(yaw, pitch, roll);
             }
