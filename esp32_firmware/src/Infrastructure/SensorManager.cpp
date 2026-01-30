@@ -1,8 +1,12 @@
 #include "SensorManager.h"
 
 bool SensorManager::begin() {
+    // Initialize I2C bus only once with custom pins
     Wire.begin(MPU6050_SDA, MPU6050_SCL);
-    if (!mpu.begin()) {
+    
+    // Pass I2C address and Wire instance to prevent multiple Wire.begin() calls
+    // Try standard I2C addresses: 0x68 (default) and 0x69 (alternate)
+    if (!mpu.begin(0x68, &Wire, 0)) {
         Serial.println("Failed to find MPU6050 chip");
         _sensorAvailable = false;
         return false;
