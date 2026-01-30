@@ -6,6 +6,13 @@ WiFiManagerService::WiFiManagerService(ConfigManager& configManager) : _configMa
 void WiFiManagerService::begin() {
     AppConfig config = _configManager.getConfig();
 
+    Serial.println("\n--- WiFi/AP Configuration ---");
+    Serial.printf("WiFi SSID: %s\n", config.wifi_ssid.c_str());
+    Serial.printf("WiFi Password: %s\n", config.wifi_password.c_str());
+    Serial.printf("Hotspot SSID: %s\n", config.hotspot_ssid.c_str());
+    Serial.printf("Hotspot Password: %s\n", config.hotspot_password.c_str());
+    Serial.println("-----------------------------");
+
     bool skipSta = false;
 #ifdef ENFORCE_HOTSPOT
     if (ENFORCE_HOTSPOT) {
@@ -16,6 +23,7 @@ void WiFiManagerService::begin() {
 
     if (!skipSta && config.wifi_ssid.length() > 0 && config.wifi_ssid != "YourWiFiSSID") {
         Serial.printf("Connecting to %s...\n", config.wifi_ssid.c_str());
+        Serial.printf("Using Password: %s\n", config.wifi_password.c_str());
         WiFi.mode(WIFI_STA);
         WiFi.begin(config.wifi_ssid.c_str(), config.wifi_password.c_str());
 
@@ -35,6 +43,8 @@ void WiFiManagerService::begin() {
     }
 
     Serial.println("\nStarting Hotspot...");
+    Serial.printf("AP SSID: %s\n", config.hotspot_ssid.c_str());
+    Serial.printf("AP Password: %s\n", config.hotspot_password.c_str());
     WiFi.mode(WIFI_AP);
     WiFi.softAP(config.hotspot_ssid.c_str(), config.hotspot_password.c_str());
     _isAPMode = true;
