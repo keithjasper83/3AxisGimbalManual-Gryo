@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional, List
-import json
+import orjson
 import asyncio
 from datetime import datetime
 
@@ -110,7 +110,7 @@ async def set_mode(mode: int):
         raise HTTPException(status_code=400, detail="Invalid mode. Use 0 for Manual or 1 for Auto")
     
     gimbal_state["mode"] = mode
-    await manager.broadcast(json.dumps({"cmd": "mode_changed", "mode": mode}))
+    await manager.broadcast(orjson.dumps({"cmd": "mode_changed", "mode": mode}).decode("utf-8"))
     return {"status": "ok", "mode": mode}
 
 # Set manual position
@@ -126,14 +126,14 @@ async def set_position(position: GimbalPosition):
         raise HTTPException(status_code=400, detail="Gimbal must be in manual mode")
     
     gimbal_state["position"] = position.dict()
-    await manager.broadcast(json.dumps({"cmd": "position_update", "position": position.dict()}))
+    await manager.broadcast(orjson.dumps({"cmd": "position_update", "position": position.dict()}).decode("utf-8"))
     return {"status": "ok", "position": position.dict()}
 
 # Set auto mode target
 @app.post("/api/auto-target")
 async def set_auto_target(position: GimbalPosition):
     gimbal_state["auto_target"] = position.dict()
-    await manager.broadcast(json.dumps({"cmd": "auto_target_update", "target": position.dict()}))
+    await manager.broadcast(orjson.dumps({"cmd": "auto_target_update", "target": position.dict()}).decode("utf-8"))
     return {"status": "ok", "target": position.dict()}
 
 # Start timed move
@@ -144,7 +144,7 @@ async def start_timed_move(move: TimedMove):
         "duration": move.duration,
         "end_position": move.end_position.dict()
     }
-    await manager.broadcast(json.dumps(command))
+    await manager.broadcast(orjson.dumps(command).decode("utf-8"))
     return {"status": "ok", "move": move.dict()}
 
 # Get all preset moves
@@ -165,7 +165,7 @@ async def execute_preset(preset_name: str):
     if not preset:
         raise HTTPException(status_code=404, detail="Preset not found")
     
-    await manager.broadcast(json.dumps({"cmd": "execute_preset", "preset": preset}))
+    await manager.broadcast(orjson.dumps({"cmd": "execute_preset", "preset": preset}).decode("utf-8"))
     return {"status": "ok", "preset": preset}
 
 # Delete preset
@@ -180,7 +180,7 @@ async def delete_preset(preset_name: str):
 async def center_gimbal():
     center_position = {"yaw": 90, "pitch": 90, "roll": 90}
     gimbal_state["position"] = center_position
-    await manager.broadcast(json.dumps({"cmd": "center"}))
+    await manager.broadcast(orjson.dumps({"cmd": "center"}).decode("utf-8"))
     return {"status": "ok", "position": center_position}
 
 # WebSocket endpoint for real-time communication
@@ -191,11 +191,11 @@ async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
         # Send current state on connection
-        await websocket.send_text(json.dumps(gimbal_state))
+        await websocket.send_text(orjson.dumps(gimbal_state).decode("utf-8"))
         
         while True:
             data = await websocket.receive_text()
-            message = json.loads(data)
+            message = orjson.loads(data)
             
             # Handle incoming messages from ESP32 or clients
             if message.get("type") == "sensor_update":
