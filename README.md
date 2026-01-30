@@ -178,6 +178,7 @@ RGB LED (GPIO48) - Internal on ESP32-S3-N16R8
 2. **Configure WiFi**
    Edit `esp32_firmware/include/config.h`:
    ```cpp
+   #define ENFORCE_HOTSPOT true // Set to true to force Hotspot mode
    #define WIFI_SSID "YourWiFiSSID"
    #define WIFI_PASSWORD "YourWiFiPassword"
    ```
@@ -186,6 +187,7 @@ RGB LED (GPIO48) - Internal on ESP32-S3-N16R8
    ```bash
    cd esp32_firmware
    # Upload the filesystem (HTML/CSS/Config)
+   # (This step now automatically validates web assets)
    pio run --target uploadfs
    # Upload the firmware
    pio run --target upload
@@ -194,9 +196,9 @@ RGB LED (GPIO48) - Internal on ESP32-S3-N16R8
    ```
 
 4. **Access Web Interface**
-   - If connected to WiFi: Check serial monitor for IP address
-   - If in hotspot mode: Connect to "Gimbal_AP" (password: gimbal123)
-   - Open browser: `http://[IP_ADDRESS]` or `http://192.168.4.1` (hotspot)
+   - **Hotspot Mode (Enforced by default)**: Connect to "Gimbal_AP" (password: gimbal123)
+   - Open browser: `http://192.168.4.1`
+   - If `ENFORCE_HOTSPOT` is false and WiFi configured: Check serial monitor for IP address
 
 ### FastAPI Backend Setup (Optional)
 
