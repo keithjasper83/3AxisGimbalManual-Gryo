@@ -13,9 +13,9 @@
 #define SERVO_PIN_PITCH 12
 #define SERVO_PIN_ROLL 14
 
-// MPU6050 Configuration
-#define MPU6050_SDA 21
-#define MPU6050_SCL 22
+// MPU6050 Configuration (ESP32-S3 compatible pins)
+#define MPU6050_SDA 8
+#define MPU6050_SCL 9
 
 // Button Configuration
 #define BUTTON_PIN 15

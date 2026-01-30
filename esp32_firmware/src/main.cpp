@@ -3,6 +3,7 @@
 #include "Services/WiFiManager.h"
 #include "Services/WebManager.h"
 #include "Services/BluetoothManager.h"
+#include "Services/LEDStatusManager.h"
 #include "Domain/GimbalController.h"
 #include "Infrastructure/SensorManager.h"
 #include "config.h"
@@ -14,6 +15,7 @@ SensorManager sensorManager;
 GimbalController gimbalController(configManager);
 WebManager webManager(configManager, gimbalController, sensorManager);
 BluetoothManager bluetoothManager(gimbalController);
+LEDStatusManager ledStatus;
 
 // Button state tracking
 unsigned long buttonPressStart = 0;
@@ -32,12 +34,25 @@ void powerOnSelfTest() {
     // Test 1: Config System
     Serial.print("Config System: ");
     hwStatus.configOk = configManager.begin();
-    Serial.println(hwStatus.configOk ? "OK" : "FAILED");
+    if (hwStatus.configOk) {
+        Serial.println("OK");
+        ledStatus.setStatus(LEDStatus::PARTIAL); // Show we're making progress
+    } else {
+        Serial.println("FAILED");
+        ledStatus.setStatus(LEDStatus::ERROR);
+    }
     
     // Test 2: Sensor System
     Serial.print("MPU6050 Sensor: ");
     hwStatus.sensorAvailable = sensorManager.begin();
-    Serial.println(hwStatus.sensorAvailable ? "OK" : "FAILED (Manual mode only)");
+    if (hwStatus.sensorAvailable) {
+        Serial.println("OK");
+    } else {
+        Serial.println("FAILED (Manual mode only)");
+        if (hwStatus.configOk) {
+            ledStatus.setStatus(LEDStatus::WARNING); // Yellow - sensor missing
+        }
+    }
     
     // Test 3: Servo System
     Serial.print("Servo Controllers: ");
@@ -77,7 +92,12 @@ void handleButton() {
 
 void setup() {
     Serial.begin(115200);
+    delay(100); // Give serial time to initialize
     Serial.println("\n\n=== ESP32 3-Axis Gimbal System v1.2 ===");
+    
+    // Initialize LED Status (do this early to show boot progress)
+    ledStatus.begin();
+    ledStatus.setStatus(LEDStatus::PARTIAL); // Show boot in progress
     
     // Initialize button
     pinMode(BUTTON_PIN, INPUT_PULLUP);
@@ -88,12 +108,20 @@ void setup() {
     // Check critical failures
     if (!hwStatus.configOk) {
         Serial.println("CRITICAL: Config system failed! System halted.");
-        while(true) { delay(1000); }
+        ledStatus.setStatus(LEDStatus::ERROR);
+        while(true) { 
+            ledStatus.update();
+            delay(100); 
+        }
     }
     
     if (!hwStatus.sensorAvailable) {
         Serial.println("WARNING: Sensor not available. Auto mode will not work.");
         Serial.println("Continuing in degraded mode (manual control only).");
+        ledStatus.setStatus(LEDStatus::WARNING);
+    } else {
+        // All hardware OK
+        ledStatus.setStatus(LEDStatus::OK);
     }
     
     // Initialize WiFi
@@ -109,6 +137,13 @@ void setup() {
     webManager.setBluetoothManager(&bluetoothManager);
 
     Serial.println("System Ready!");
+    
+    // Final LED status
+    if (hwStatus.sensorAvailable) {
+        ledStatus.setStatus(LEDStatus::OK);
+    } else {
+        ledStatus.setStatus(LEDStatus::WARNING);
+    }
 }
 
 void loop() {
@@ -118,6 +153,9 @@ void loop() {
     static unsigned long lastWSUpdate = 0;
     static unsigned long lastButtonCheck = 0;
     static unsigned long lastBTUpdate = 0;
+    
+    // Update LED status (handles flashing)
+    ledStatus.update();
     
     wifiManager.handle();
     webManager.handle();

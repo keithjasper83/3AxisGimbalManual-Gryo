@@ -26,9 +26,15 @@ void ConfigManager::resetToDefaults() {
 }
 
 bool ConfigManager::begin() {
+    // First try to mount without formatting
     if (!LittleFS.begin(false)) {
-        Serial.println("LittleFS Mount Failed");
-        return false;
+        Serial.println("LittleFS Mount Failed - attempting to format...");
+        // If mount failed, try to format and mount
+        if (!LittleFS.begin(true)) {
+            Serial.println("LittleFS Format and Mount Failed");
+            return false;
+        }
+        Serial.println("LittleFS formatted successfully");
     }
     return loadConfig();
 }
