@@ -1,6 +1,6 @@
 #include "LEDStatusManager.h"
+#include "config.h"
 
-#define RGB_LED_PIN 48       // ESP32-S3-N16R8 onboard RGB LED
 #define NUM_PIXELS 1
 #define FLASH_INTERVAL 500   // Flash interval in ms
 
@@ -13,12 +13,17 @@ LEDStatusManager::LEDStatusManager()
 
 void LEDStatusManager::begin() {
     _pixel.begin();
-    _pixel.setBrightness(50); // Set to 50% brightness to avoid being too bright
+    _pixel.setBrightness(RGB_LED_BRIGHTNESS); // Configurable brightness from config.h
     _pixel.show(); // Initialize all pixels to 'off'
 }
 
 void LEDStatusManager::setStatus(LEDStatus status) {
     _currentStatus = status;
+    // Initialize lastUpdate when transitioning to flashing state
+    if (status == LEDStatus::PARTIAL) {
+        _lastUpdate = millis();
+        _flashState = false;
+    }
     _updateLED();
 }
 

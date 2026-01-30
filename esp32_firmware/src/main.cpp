@@ -36,10 +36,10 @@ void powerOnSelfTest() {
     hwStatus.configOk = configManager.begin();
     if (hwStatus.configOk) {
         Serial.println("OK");
-        ledStatus.setStatus(LEDStatus::PARTIAL); // Show we're making progress
     } else {
         Serial.println("FAILED");
         ledStatus.setStatus(LEDStatus::ERROR);
+        return; // Stop POST on critical failure
     }
     
     // Test 2: Sensor System
@@ -49,9 +49,6 @@ void powerOnSelfTest() {
         Serial.println("OK");
     } else {
         Serial.println("FAILED (Manual mode only)");
-        if (hwStatus.configOk) {
-            ledStatus.setStatus(LEDStatus::WARNING); // Yellow - sensor missing
-        }
     }
     
     // Test 3: Servo System
@@ -118,10 +115,10 @@ void setup() {
     if (!hwStatus.sensorAvailable) {
         Serial.println("WARNING: Sensor not available. Auto mode will not work.");
         Serial.println("Continuing in degraded mode (manual control only).");
-        ledStatus.setStatus(LEDStatus::WARNING);
+        ledStatus.setStatus(LEDStatus::WARNING); // Yellow for degraded mode
     } else {
         // All hardware OK
-        ledStatus.setStatus(LEDStatus::OK);
+        ledStatus.setStatus(LEDStatus::OK); // Green for all systems operational
     }
     
     // Initialize WiFi
@@ -137,13 +134,6 @@ void setup() {
     webManager.setBluetoothManager(&bluetoothManager);
 
     Serial.println("System Ready!");
-    
-    // Final LED status
-    if (hwStatus.sensorAvailable) {
-        ledStatus.setStatus(LEDStatus::OK);
-    } else {
-        ledStatus.setStatus(LEDStatus::WARNING);
-    }
 }
 
 void loop() {

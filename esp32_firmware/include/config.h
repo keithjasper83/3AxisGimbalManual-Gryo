@@ -17,6 +17,10 @@
 #define MPU6050_SDA 8
 #define MPU6050_SCL 9
 
+// RGB LED Configuration (ESP32-S3-N16R8 onboard LED)
+#define RGB_LED_PIN 48
+#define RGB_LED_BRIGHTNESS 50 // 0-255, brightness level
+
 // Button Configuration
 #define BUTTON_PIN 15
 #define BUTTON_DEBOUNCE_MS 50
