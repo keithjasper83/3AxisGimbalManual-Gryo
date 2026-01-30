@@ -11,6 +11,7 @@
 #define POSITION_CHAR_UUID  "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 #define MODE_CHAR_UUID      "beb5483e-36e1-4688-b7f5-ea07361b26a9"
 #define STATUS_CHAR_UUID    "beb5483e-36e1-4688-b7f5-ea07361b26aa"
+#define BLE_DEVICE_NAME     "ESP32_Gimbal"
 
 class BluetoothManager {
 public:

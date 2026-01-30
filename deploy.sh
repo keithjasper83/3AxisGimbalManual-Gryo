@@ -44,7 +44,7 @@ detect_port() {
     if [ "$(uname)" == "Darwin" ]; then
         # macOS
         PORT=$(ls /dev/cu.* 2>/dev/null | grep -E 'usbserial|SLAB|wchusbserial' | head -n 1)
-    elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+    elif [[ "$(uname -s)" == Linux* ]]; then
         # Linux
         PORT=$(ls /dev/ttyUSB* /dev/ttyACM* 2>/dev/null | head -n 1)
     else
