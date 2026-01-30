@@ -1,6 +1,66 @@
 # Contributing to 3-Axis Gimbal Control System
 
+**⚠️ SECURITY NOTICE**: Before contributing, review [KnownIssues.MD](KnownIssues.MD) to understand current security vulnerabilities and technical debt.
+
 Thank you for your interest in contributing! This document provides guidelines for contributing to the project.
+
+---
+
+## Code Review Process
+
+### Before Submitting a PR
+
+1. **Review Known Issues**: Check [KnownIssues.MD](KnownIssues.MD) to ensure you're not duplicating work
+2. **Run Tests**: Follow [docs/TESTING.md](docs/TESTING.md) manual testing checklist
+3. **Security Check**: Ensure your changes don't introduce new security issues
+4. **Code Quality**: Follow the coding guidelines below
+
+### PR Review Checklist
+
+**Security** (Critical):
+- [ ] No hardcoded credentials or secrets
+- [ ] No SQL injection or command injection vulnerabilities
+- [ ] Input validation on all user inputs
+- [ ] Authentication/authorization properly implemented
+- [ ] No plain text password storage (unless encrypted)
+- [ ] CORS properly configured (if backend changes)
+- [ ] Rate limiting considered for API endpoints
+
+**Code Quality**:
+- [ ] Follows existing code style
+- [ ] No compiler warnings
+- [ ] Code is commented where necessary
+- [ ] No magic numbers (use named constants)
+- [ ] Error handling implemented
+- [ ] Memory leaks checked (for C++)
+- [ ] Thread safety considered (if using mutexes)
+
+**Testing**:
+- [ ] Manual tests performed (see [docs/TESTING.md](docs/TESTING.md))
+- [ ] Automated tests added (if applicable)
+- [ ] No test regressions
+- [ ] Edge cases covered
+
+**Documentation**:
+- [ ] README updated (if user-facing changes)
+- [ ] API docs updated (if API changes)
+- [ ] Comments added for complex logic
+- [ ] CHANGELOG.md updated
+- [ ] KnownIssues.MD updated (if fixing an issue or introducing a known limitation)
+
+**Hardware Safety** (if applicable):
+- [ ] Servo limits enforced (0-180°)
+- [ ] No rapid movements that could damage hardware
+- [ ] Safe defaults maintained
+- [ ] Graceful degradation on errors
+
+### Code Review Response Time
+
+- Initial review: Within 3-5 business days
+- Follow-up reviews: Within 2 business days
+- Urgent security fixes: Within 24 hours
+
+---
 
 ## How to Contribute
 
