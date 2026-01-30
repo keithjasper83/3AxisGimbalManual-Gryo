@@ -11,6 +11,8 @@ WebManager::WebManager(ConfigManager& configManager, GimbalController& gimbalCon
 {}
 
 void WebManager::begin() {
+    // ⚠️ SECURITY ISSUE: WebSocket has no authentication. See KnownIssues.MD #ISSUE-005
+    // TODO: Implement WebSocket authentication before production deployment
     _ws.onEvent([this](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
         this->onWebSocketEvent(server, client, type, arg, data, len);
     });
@@ -124,6 +126,9 @@ void WebManager::onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *
 }
 
 void WebManager::handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
+    // ⚠️ SECURITY ISSUE: No input validation. See KnownIssues.MD #ISSUE-006
+    // ⚠️ SECURITY ISSUE: No rate limiting. See KnownIssues.MD #ISSUE-007
+    // TODO: Add input validation and rate limiting
     AwsFrameInfo *info = (AwsFrameInfo*)arg;
     if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
         StaticJsonDocument<512> doc;

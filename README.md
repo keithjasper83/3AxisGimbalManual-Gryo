@@ -1,5 +1,17 @@
 # ESP32 3-Axis Gimbal Control System
 
+**⚠️ IMPORTANT SECURITY NOTICE**: This software contains known security issues that must be addressed before production deployment. See [KnownIssues.MD](KnownIssues.MD) for a comprehensive list of issues and remediation steps.
+
+**Critical Issues to Address**:
+- 🔴 Change all default passwords (see [ISSUE-003](KnownIssues.MD#issue-003-hardcoded-default-passwords))
+- 🔴 Restrict CORS origins in backend (see [ISSUE-001](KnownIssues.MD#issue-001-unrestricted-cors-in-backend-api))
+- 🔴 Implement API authentication (see [ISSUE-002](KnownIssues.MD#issue-002-no-authentication-on-api-endpoints))
+- 🔴 Enable Bluetooth pairing (see [ISSUE-010](KnownIssues.MD#issue-010-bluetooth-not-securedpaired))
+
+**For a complete list of all 26 documented issues, see [KnownIssues.MD](KnownIssues.MD)**
+
+---
+
 A comprehensive, upgradeable ESP32-based 3-axis gimbal control system with web interface, REST API, and automatic stabilization using gyroscope and accelerometer sensors.
 
 ## 🌟 Features

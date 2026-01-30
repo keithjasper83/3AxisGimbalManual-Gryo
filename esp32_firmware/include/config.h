@@ -1,11 +1,15 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+// ⚠️ SECURITY WARNING: See KnownIssues.MD #ISSUE-003, #ISSUE-004
+// TODO: Change these default passwords before deployment!
+// Default passwords are a CRITICAL security vulnerability.
+
 // WiFi Configuration
 #define WIFI_SSID "YourWiFiSSID"
-#define WIFI_PASSWORD "YourWiFiPassword"
+#define WIFI_PASSWORD "YourWiFiPassword"  // ⚠️ CHANGE THIS!
 #define HOTSPOT_SSID "Gimbal_AP"
-#define HOTSPOT_PASSWORD "gimbal123"
+#define HOTSPOT_PASSWORD "gimbal123"      // ⚠️ WEAK DEFAULT - CHANGE THIS!
 #define WIFI_TIMEOUT 10000 // 10 seconds
 
 // Servo Pin Configuration

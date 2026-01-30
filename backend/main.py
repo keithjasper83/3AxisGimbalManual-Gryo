@@ -10,9 +10,12 @@ from datetime import datetime
 app = FastAPI(title="3-Axis Gimbal API", version="1.0.0")
 
 # CORS middleware
+# ⚠️ SECURITY ISSUE: See KnownIssues.MD #ISSUE-001
+# TODO: Restrict CORS origins before production deployment
+# Current configuration allows ANY origin to make authenticated requests (SECURITY RISK)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # ⚠️ CHANGE THIS: Use specific origins in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -66,11 +69,13 @@ class ConnectionManager:
         self.active_connections.remove(websocket)
 
     async def broadcast(self, message: str):
+        # ⚠️ RELIABILITY ISSUE: See KnownIssues.MD #ISSUE-008
+        # TODO: Properly handle dead connections and remove them
         for connection in self.active_connections:
             try:
                 await connection.send_text(message)
             except:
-                pass
+                pass  # Silent failure - dead connections accumulate
 
 manager = ConnectionManager()
 
@@ -92,6 +97,8 @@ async def health_check():
     }
 
 # Get gimbal status
+# ⚠️ SECURITY ISSUE: See KnownIssues.MD #ISSUE-002
+# TODO: Add authentication before production deployment
 @app.get("/api/status")
 async def get_status():
     return gimbal_state
@@ -107,8 +114,14 @@ async def set_mode(mode: int):
     return {"status": "ok", "mode": mode}
 
 # Set manual position
+# ⚠️ SECURITY ISSUE: See KnownIssues.MD #ISSUE-002 (No authentication)
+# ⚠️ SECURITY ISSUE: See KnownIssues.MD #ISSUE-006 (No input validation)
+# ⚠️ SECURITY ISSUE: See KnownIssues.MD #ISSUE-007 (No rate limiting)
 @app.post("/api/position")
 async def set_position(position: GimbalPosition):
+    # TODO: Add authentication check
+    # TODO: Add input range validation (0-180 degrees)
+    # TODO: Add rate limiting
     if gimbal_state["mode"] != 0:
         raise HTTPException(status_code=400, detail="Gimbal must be in manual mode")
     
@@ -171,6 +184,8 @@ async def center_gimbal():
     return {"status": "ok", "position": center_position}
 
 # WebSocket endpoint for real-time communication
+# ⚠️ SECURITY ISSUE: See KnownIssues.MD #ISSUE-005
+# TODO: Implement WebSocket authentication before production
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)

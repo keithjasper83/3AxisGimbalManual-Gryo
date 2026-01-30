@@ -100,6 +100,9 @@ bool ConfigManager::saveConfig() {
 }
 
 bool ConfigManager::_saveConfigInternal() {
+    // ⚠️ SECURITY ISSUE: Passwords stored in plain text. See KnownIssues.MD #ISSUE-004
+    // ⚠️ DATA INTEGRITY ISSUE: Non-atomic writes. See KnownIssues.MD #ISSUE-019
+    // TODO: Consider encryption for passwords and atomic write-rename pattern
     StaticJsonDocument<1024> doc;
     doc["wifi_ssid"] = config.wifi_ssid;
     doc["wifi_password"] = config.wifi_password;
