@@ -58,6 +58,8 @@ void BluetoothManager::ModeCallbacks::onWrite(BLECharacteristic* pCharacteristic
 }
 
 void BluetoothManager::begin() {
+    // ⚠️ SECURITY ISSUE: No pairing/encryption. See KnownIssues.MD #ISSUE-010
+    // TODO: Enable BLE pairing and encryption before production
     Serial.println("Initializing Bluetooth...");
     
     // Create the BLE Device

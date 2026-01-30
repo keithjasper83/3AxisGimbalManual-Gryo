@@ -43,6 +43,7 @@ out/
 *.swo
 *~
 .DS_Store
+*.code-workspace
 
 # Project specific
 *.log
@@ -51,3 +52,23 @@ out/
 # Ignore config.json at root, but allow the default one in esp32_firmware/data/
 /config.json
 backend/config.json
+
+# Build artifacts
+*.o
+*.a
+*.elf
+*.bin
+*.hex
+
+# Temporary files
+*.tmp
+*.bak
+*~
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Documentation builds
+docs/_build/
