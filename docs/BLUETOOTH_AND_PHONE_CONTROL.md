@@ -49,17 +49,37 @@ See the "Future Enhancements" section for planned security features.
 
 ## Connecting via Bluetooth
 
-#### Using a Mobile Device
+### User Guide (How to connect)
 
-1. Enable Bluetooth on your mobile device
-2. Scan for BLE devices
-3. Look for `ESP32_Gimbal` in the device list
-4. Connect to the device
-5. The web interface will show "Connected" status
+**Important**: This system uses standard Bluetooth Low Energy (BLE) GATT. It does **not** support "Fast Pair" or "Find My" style automatic popups like AirTags or AirPods. You must use a compatible app to connect.
 
-#### Using Custom Apps
+#### 1. Using a Generic BLE Scanner App (Recommended for Testing)
 
-See the [Mobile App Development Guide](#mobile-app-development-guide) section below.
+To test the connection or control the gimbal manually without building a custom app, use a free BLE scanner app:
+- **iOS**: [LightBlue](https://apps.apple.com/us/app/lightblue/id557428110) or [nRF Connect](https://apps.apple.com/us/app/nrf-connect-for-mobile/id1338636408)
+- **Android**: [nRF Connect](https://play.google.com/store/apps/details?id=no.nordicsemi.android.mcp) or [LightBlue](https://play.google.com/store/apps/details?id=com.punchthrough.lightblueexplorer)
+
+**Steps:**
+1. Open the app and scan for devices.
+2. Find **`ESP32_Gimbal`** in the list and tap **Connect**.
+3. **No pairing code is required.** If prompted, just select "Pair" (some phones force this) or cancel; the connection is open.
+4. Once connected:
+   - Browse the "Services".
+   - Find the custom service `4fafc201-1fb5-459e-8fcc-c5c9c331914b`.
+   - You can write to the characteristics to control the gimbal (see API Reference below).
+
+#### 2. Using the WiFi Web Interface?
+**Note**: The Web Interface (accessed via `http://192.168.4.1`) uses **WiFi**, not Bluetooth.
+- The "Bluetooth" status indicator in the Web Interface simply tells you if *another* device is currently controlling the gimbal via BLE.
+- You cannot establish the BLE connection *from* the Web Interface because browsers do not support Web Bluetooth over insecure HTTP connections (only HTTPS or localhost).
+
+### FAQ
+
+**Q: Do I have to pair?**
+**A: No.** The device uses open BLE advertising. No bonding or PIN code is required.
+
+**Q: Does it work like AirTags?**
+**A: No.** AirTags use proprietary Apple protocols for background discovery and popups. This device uses standard BLE. It will not automatically pop up on your phone unless you have an app installed that is scanning for it.
 
 ---
 

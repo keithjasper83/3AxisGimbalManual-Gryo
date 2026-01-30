@@ -28,9 +28,9 @@ A comprehensive, upgradeable ESP32-based 3-axis gimbal control system with web i
   - No internet required for operation
 
 - **Bluetooth Low Energy (BLE)**
-  - Direct device-to-device wireless control
-  - Lower power consumption than WiFi
-  - Mobile app integration ready
+  - Direct device-to-device wireless control (Headless mode)
+  - Connect via generic BLE apps (nRF Connect, LightBlue)
+  - **No pairing required** - Open GATT server
   - Real-time position and status updates
 
 - **Phone Gyroscope Control**
@@ -380,18 +380,18 @@ Control the gimbal by tilting your phone - no app installation required!
 
 **Supported Browsers**: Safari (iOS 13+), Chrome (Android), Firefox (Android)
 
-### Option 2: Bluetooth BLE Control
-Connect directly to the gimbal via Bluetooth Low Energy:
+### Option 2: Bluetooth BLE Control (Advanced)
+Connect directly to the gimbal via Bluetooth Low Energy without WiFi.
 
 - **Device Name**: `ESP32_Gimbal`
 - **Service UUID**: `4fafc201-1fb5-459e-8fcc-c5c9c331914b`
-- **Features**: Position control, mode switching, status notifications
-- **Documentation**: See `/docs/BLUETOOTH_AND_PHONE_CONTROL.md`
+- **How to Connect**: Use a generic BLE Scanner app (LightBlue, nRF Connect) or build a custom app.
+- **Pairing**: Not required.
+- **Documentation**: See `/docs/BLUETOOTH_AND_PHONE_CONTROL.md` for detailed connecting instructions.
 
 **Advantages**:
 - No WiFi required
 - Lower latency (<50ms)
-- Lower power consumption
 - Direct device-to-device communication
 
 ### Option 3: Progressive Web App (PWA)
