@@ -55,6 +55,11 @@ A comprehensive, upgradeable ESP32-based 3-axis gimbal control system with web i
   - Continues operation in manual mode without gyroscope
   - Real-time hardware status monitoring
   - Visual warnings for missing hardware
+  - **RGB LED Status Indicators** (ESP32-S3-N16R8):
+    - 🔴 RED: Critical error (system halted)
+    - 🟡 YELLOW: Sensor missing (manual mode only)
+    - 🟢 GREEN (flashing): Boot in progress
+    - 🟢 GREEN (solid): All systems operational
 
 ## 🏗️ Architecture
 
@@ -96,9 +101,11 @@ The system follows a modern, upgradeable architecture:
 
 ### Required Components
 
-1. **ESP32 Development Board**
-   - Any ESP32 board (ESP32-WROOM-32, ESP32-DevKit, etc.)
-   - Minimum 520KB SRAM, 4MB Flash
+1. **ESP32-S3 Development Board** (Recommended)
+   - ESP32-S3-N16R8 (ESP32-S3 DevKitC-1) with onboard RGB LED
+   - Minimum 512KB SRAM, 16MB Flash, 8MB PSRAM
+   - USB-C connector for programming and power
+   - Note: Original ESP32 boards are also supported but lack RGB LED status indicator
 
 2. **MPU6050 Sensor**
    - 6-axis gyroscope and accelerometer
@@ -121,21 +128,24 @@ The system follows a modern, upgradeable architecture:
 ### Wiring Diagram
 
 ```
-ESP32          MPU6050
-GPIO21 (SDA) → SDA
-GPIO22 (SCL) → SCL
+ESP32-S3        MPU6050
+GPIO8 (SDA)  → SDA
+GPIO9 (SCL)  → SCL
 3.3V         → VCC
 GND          → GND
 
-ESP32          Servos
+ESP32-S3        Servos
 GPIO13       → Yaw Servo Signal
 GPIO12       → Pitch Servo Signal
 GPIO14       → Roll Servo Signal
-5V           → Servo VCC (all 3)
-GND          → Servo GND (all 3)
+5V (External)→ Servo Power (All 3)
+GND          → Servo Ground (All 3)
 
-ESP32          Control Button
-GPIO15       → Button (other side to GND)
+ESP32-S3        Button
+GPIO15       → Button Pin
+GND          → Button Ground
+
+RGB LED (GPIO48) - Internal on ESP32-S3-N16R8
 ```
 
 **📖 For complete GPIO pin details, see [GPIO Pin Reference Guide](docs/GPIO_PIN_REFERENCE.md)**  

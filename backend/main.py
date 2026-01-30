@@ -51,7 +51,7 @@ gimbal_state = {
     "connected": False
 }
 
-preset_moves = []
+preset_moves = {}
 
 # WebSocket connection manager
 class ConnectionManager:
@@ -137,18 +137,18 @@ async def start_timed_move(move: TimedMove):
 # Get all preset moves
 @app.get("/api/presets")
 async def get_presets():
-    return {"presets": preset_moves}
+    return {"presets": list(preset_moves.values())}
 
 # Create preset move
 @app.post("/api/presets")
 async def create_preset(preset: PresetMove):
-    preset_moves.append(preset.dict())
+    preset_moves[preset.name] = preset.dict()
     return {"status": "ok", "preset": preset.dict()}
 
 # Execute preset move
 @app.post("/api/presets/{preset_name}/execute")
 async def execute_preset(preset_name: str):
-    preset = next((p for p in preset_moves if p["name"] == preset_name), None)
+    preset = preset_moves.get(preset_name)
     if not preset:
         raise HTTPException(status_code=404, detail="Preset not found")
     
@@ -158,8 +158,8 @@ async def execute_preset(preset_name: str):
 # Delete preset
 @app.delete("/api/presets/{preset_name}")
 async def delete_preset(preset_name: str):
-    global preset_moves
-    preset_moves = [p for p in preset_moves if p["name"] != preset_name]
+    if preset_name in preset_moves:
+        del preset_moves[preset_name]
     return {"status": "ok"}
 
 # Center gimbal
