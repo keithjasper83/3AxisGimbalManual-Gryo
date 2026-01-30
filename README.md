@@ -1,5 +1,7 @@
 # ESP32 3-Axis Gimbal Control System
 
+**📘 [Complete Deployment Guide](DEPLOYMENT.md)** - Step-by-step production deployment instructions with troubleshooting
+
 **⚠️ IMPORTANT SECURITY NOTICE**: This software contains known security issues that must be addressed before production deployment. See [KnownIssues.MD](KnownIssues.MD) for a comprehensive list of issues and remediation steps.
 
 **Critical Issues to Address**:

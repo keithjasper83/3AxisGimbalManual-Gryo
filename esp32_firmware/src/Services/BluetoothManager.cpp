@@ -63,7 +63,7 @@ void BluetoothManager::begin() {
     Serial.println("Initializing Bluetooth...");
     
     // Create the BLE Device
-    BLEDevice::init("ESP32_Gimbal");
+    BLEDevice::init(BLE_DEVICE_NAME);
     
     // Create the BLE Server
     _pServer = BLEDevice::createServer();
@@ -96,15 +96,32 @@ void BluetoothManager::begin() {
     // Start the service
     pService->start();
     
-    // Start advertising
+    // Start advertising with iOS-compatible settings
     BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
-    pAdvertising->addServiceUUID(SERVICE_UUID);
     pAdvertising->setScanResponse(true);
+    
+    // iOS-compatible advertising parameters
+    // Connection intervals: 20ms min (0x06 * 1.25ms), 40ms max (0x12 * 1.25ms)
     pAdvertising->setMinPreferred(0x06);
-    pAdvertising->setMaxPreferred(0x12);  // Fixed: was setMinPreferred
+    pAdvertising->setMaxPreferred(0x12);
+    
+    // Enable general discoverable and connectable modes for iOS
+    BLEAdvertisementData advertisementData;
+    advertisementData.setFlags(0x06); // General Discoverable + BR/EDR Not Supported
+    advertisementData.setCompleteServices(BLEUUID(SERVICE_UUID));
+    advertisementData.setName(BLE_DEVICE_NAME);
+    pAdvertising->setAdvertisementData(advertisementData);
+    
+    // Scan response data (helps iOS discover the device)
+    BLEAdvertisementData scanResponseData;
+    scanResponseData.setName(BLE_DEVICE_NAME);
+    pAdvertising->setScanResponseData(scanResponseData);
+    
     BLEDevice::startAdvertising();
     
-    Serial.println("Bluetooth BLE service started - Advertising as 'ESP32_Gimbal'");
+    Serial.print("Bluetooth BLE service started - Advertising as '");
+    Serial.print(BLE_DEVICE_NAME);
+    Serial.println("'");
 }
 
 void BluetoothManager::handle() {
