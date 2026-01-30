@@ -6,6 +6,7 @@
 // Default passwords are a CRITICAL security vulnerability.
 
 // WiFi Configuration
+#define ENFORCE_HOTSPOT true // Enforce hotspot mode for debugging/setup
 #define WIFI_SSID "YourWiFiSSID"
 #define WIFI_PASSWORD "YourWiFiPassword"  // ⚠️ CHANGE THIS!
 #define HOTSPOT_SSID "Gimbal_AP"

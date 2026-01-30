@@ -6,7 +6,15 @@ WiFiManagerService::WiFiManagerService(ConfigManager& configManager) : _configMa
 void WiFiManagerService::begin() {
     AppConfig config = _configManager.getConfig();
 
-    if (config.wifi_ssid.length() > 0 && config.wifi_ssid != "YourWiFiSSID") {
+    bool skipSta = false;
+#ifdef ENFORCE_HOTSPOT
+    if (ENFORCE_HOTSPOT) {
+        Serial.println("\n[INFO] Enforcing Hotspot Mode (Configured in config.h)");
+        skipSta = true;
+    }
+#endif
+
+    if (!skipSta && config.wifi_ssid.length() > 0 && config.wifi_ssid != "YourWiFiSSID") {
         Serial.printf("Connecting to %s...\n", config.wifi_ssid.c_str());
         WiFi.mode(WIFI_STA);
         WiFi.begin(config.wifi_ssid.c_str(), config.wifi_password.c_str());

@@ -44,6 +44,13 @@ echo "Checking ESP32 Firmware Files..."
 check_file "esp32_firmware/platformio.ini"
 check_file "esp32_firmware/src/main.cpp"
 check_file "esp32_firmware/include/config.h"
+check_file "esp32_firmware/verify_web_assets.py"
+echo ""
+
+echo "Checking Web Interface Files..."
+check_file "esp32_firmware/data/index.html"
+check_file "esp32_firmware/data/config.json"
+check_file "esp32_firmware/data/favicon.svg"
 echo ""
 
 echo "Checking Backend Files..."
