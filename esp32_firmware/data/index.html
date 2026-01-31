@@ -210,6 +210,10 @@
                             <span id="hw-bluetooth-status" class="px-3 py-1 rounded text-sm bg-gray-700">Disconnected</span>
                         </div>
                         <div class="flex justify-between items-center">
+                            <span class="text-gray-300">BLE Event:</span>
+                            <span id="hw-ble-event" class="text-sm text-gray-400">—</span>
+                        </div>
+                        <div class="flex justify-between items-center">
                             <span class="text-gray-300">Servo Controllers:</span>
                             <span class="px-3 py-1 rounded text-sm bg-green-600">Online</span>
                         </div>
@@ -532,6 +536,7 @@
             if (data.hardware) {
                 const sensorStatus = document.getElementById('hw-sensor-status');
                 const btStatus = document.getElementById('hw-bluetooth-status');
+                const bleEvent = document.getElementById('hw-ble-event');
                 const hwWarning = document.getElementById('hw-warning');
                 const hwWarningText = document.getElementById('hw-warning-text');
                 
@@ -550,12 +555,31 @@
                 
                 if (data.hardware.bluetooth_connected) {
                     btStatus.innerText = 'Connected';
-                    btStatus.classList.remove('bg-red-600', 'bg-gray-700');
+                    btStatus.classList.remove('bg-red-600', 'bg-gray-700', 'bg-yellow-600');
                     btStatus.classList.add('bg-green-600');
+                } else if (data.hardware.bluetooth_advertising) {
+                    btStatus.innerText = 'Advertising';
+                    btStatus.classList.remove('bg-green-600', 'bg-red-600', 'bg-gray-700');
+                    btStatus.classList.add('bg-yellow-600');
                 } else {
-                    btStatus.innerText = 'Disconnected';
-                    btStatus.classList.remove('bg-green-600', 'bg-red-600');
+                    btStatus.innerText = 'Idle';
+                    btStatus.classList.remove('bg-green-600', 'bg-red-600', 'bg-yellow-600');
                     btStatus.classList.add('bg-gray-700');
+                }
+
+                if (bleEvent && data.hardware.bluetooth_last_event) {
+                    let ageText = '';
+                    if (typeof data.hardware.bluetooth_last_event_age_ms === 'number') {
+                        const ageSec = Math.max(0, Math.floor(data.hardware.bluetooth_last_event_age_ms / 1000));
+                        if (ageSec < 60) {
+                            ageText = `${ageSec}s ago`;
+                        } else {
+                            const min = Math.floor(ageSec / 60);
+                            const sec = ageSec % 60;
+                            ageText = `${min}m ${sec}s ago`;
+                        }
+                    }
+                    bleEvent.innerText = ageText ? `${data.hardware.bluetooth_last_event} (${ageText})` : data.hardware.bluetooth_last_event;
                 }
             }
         }
@@ -734,12 +758,16 @@
 
             // Request permission on iOS 13+
             if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                if (!window.isSecureContext) {
+                    showPhoneGyroError('Device orientation requires HTTPS on iOS. Motion sensors are blocked on HTTP. Use a secure origin or a trusted HTTPS proxy.');
+                    return;
+                }
                 DeviceOrientationEvent.requestPermission()
                     .then(permissionState => {
                         if (permissionState === 'granted') {
                             startPhoneGyro();
                         } else {
-                            showPhoneGyroError('Permission denied for device orientation');
+                            showPhoneGyroError('Permission denied for device orientation. On iOS, enable Motion & Orientation Access in Settings → Safari, and use HTTPS.');
                         }
                     })
                     .catch(err => {

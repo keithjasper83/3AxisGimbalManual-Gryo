@@ -7,16 +7,23 @@ BluetoothManager::BluetoothManager(GimbalController& gimbalController)
       _pModeCharacteristic(nullptr),
       _pStatusCharacteristic(nullptr),
       _deviceConnected(false),
-      _oldDeviceConnected(false)
+      _oldDeviceConnected(false),
+      _isAdvertising(false),
+      _lastEvent("boot"),
+      _lastEventMs(0)
 {}
 
 void BluetoothManager::ServerCallbacks::onConnect(BLEServer* pServer) {
     _manager->_deviceConnected = true;
+    _manager->_isAdvertising = false;
+    _manager->setEvent("connected");
     Serial.println("BLE Client Connected");
 }
 
 void BluetoothManager::ServerCallbacks::onDisconnect(BLEServer* pServer) {
     _manager->_deviceConnected = false;
+    _manager->_isAdvertising = false;
+    _manager->setEvent("disconnected");
     Serial.println("BLE Client Disconnected");
 }
 
@@ -61,6 +68,7 @@ void BluetoothManager::begin() {
     // ⚠️ SECURITY ISSUE: No pairing/encryption. See KnownIssues.MD #ISSUE-010
     // TODO: Enable BLE pairing and encryption before production
     Serial.println("Initializing Bluetooth...");
+    setEvent("init");
     
     // Create the BLE Device
     BLEDevice::init(BLE_DEVICE_NAME);
@@ -118,6 +126,8 @@ void BluetoothManager::begin() {
     pAdvertising->setScanResponseData(scanResponseData);
     
     BLEDevice::startAdvertising();
+    _isAdvertising = true;
+    setEvent("advertising");
     
     Serial.print("Bluetooth BLE service started - Advertising as '");
     Serial.print(BLE_DEVICE_NAME);
@@ -131,6 +141,8 @@ void BluetoothManager::handle() {
         static unsigned long lastDisconnect = 0;
         if (millis() - lastDisconnect > 500) {
             _pServer->startAdvertising();
+            _isAdvertising = true;
+            setEvent("advertising");
             Serial.println("Start advertising");
             _oldDeviceConnected = _deviceConnected;
             lastDisconnect = millis();
@@ -144,6 +156,26 @@ void BluetoothManager::handle() {
 
 bool BluetoothManager::isConnected() {
     return _deviceConnected;
+}
+
+bool BluetoothManager::isAdvertising() const {
+    return _isAdvertising;
+}
+
+const char* BluetoothManager::getLastEvent() const {
+    return _lastEvent.c_str();
+}
+
+uint32_t BluetoothManager::getLastEventAgeMs() const {
+    if (_lastEventMs == 0) {
+        return 0;
+    }
+    return millis() - _lastEventMs;
+}
+
+void BluetoothManager::setEvent(const char* event) {
+    _lastEvent = event;
+    _lastEventMs = millis();
 }
 
 void BluetoothManager::updateStatus() {

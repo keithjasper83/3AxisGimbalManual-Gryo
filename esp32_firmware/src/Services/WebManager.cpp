@@ -90,6 +90,10 @@ void WebManager::begin() {
         doc["sensor_available"] = _sensorManager.isAvailable();
         doc["config_ok"] = true; // If we're here, config is working
         doc["servo_ok"] = true; // Assume servos are OK if system is running
+        doc["bluetooth_connected"] = _bluetoothManager ? _bluetoothManager->isConnected() : false;
+        doc["bluetooth_advertising"] = _bluetoothManager ? _bluetoothManager->isAdvertising() : false;
+        doc["bluetooth_last_event"] = _bluetoothManager ? _bluetoothManager->getLastEvent() : "";
+        doc["bluetooth_last_event_age_ms"] = _bluetoothManager ? _bluetoothManager->getLastEventAgeMs() : 0;
         
         String response;
         serializeJson(doc, response);
@@ -173,29 +177,39 @@ void WebManager::handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
         } else if (strcmp(cmd, "runSelfTest") == 0) {
             _gimbalController.runSelfTest();
         } else if (strcmp(cmd, "setPhoneGyro") == 0) {
-            // Handle phone gyroscope data
+            // Handle phone gyroscope rate data (rad/s)
+            if (doc.containsKey("gx") && doc.containsKey("gy") && doc.containsKey("gz")) {
+                float gx = doc["gx"];
+                float gy = doc["gy"];
+                float gz = doc["gz"];
+
+                // Basic sanity clamp (rad/s)
+                if (gx < -20.0f || gx > 20.0f ||
+                    gy < -20.0f || gy > 20.0f ||
+                    gz < -20.0f || gz > 20.0f) {
+                    return;
+                }
+
+                _gimbalController.setPhoneGyroRates(gx, gy, gz);
+                return;
+            }
+
+            // Back-compat: legacy orientation input (alpha/beta/gamma)
             if (doc.containsKey("alpha") && doc.containsKey("beta") && doc.containsKey("gamma")) {
-                // Phone orientation: alpha (z-axis), beta (x-axis), gamma (y-axis)
                 float alpha = doc["alpha"];  // 0 to 360
                 float beta = doc["beta"];    // -180 to 180
                 float gamma = doc["gamma"];  // -90 to 90
-                
-                // Validate input ranges
+
                 if (alpha < 0.0f || alpha > 360.0f ||
                     beta < -180.0f || beta > 180.0f ||
                     gamma < -90.0f || gamma > 90.0f) {
-                    // Invalid values, ignore
                     return;
                 }
-                
-                // Map phone orientation to gimbal position
-                // Alpha (compass heading) -> Yaw: 0-360° maps to 0-180°
-                // Beta (front-back tilt) -> Pitch: -180 to 180° maps to 0-180°
-                // Gamma (left-right tilt) -> Roll: -90 to 90° maps to 0-180°
+
                 float yaw = alpha / 2.0f;
                 float pitch = ((beta + 180.0f) / 360.0f) * 180.0f;
                 float roll = ((gamma + 90.0f) / 180.0f) * 180.0f;
-                
+
                 _gimbalController.setManualPosition(yaw, pitch, roll);
             }
         }
@@ -222,6 +236,9 @@ void WebManager::broadcastStatus() {
     
     doc["hardware"]["sensor_available"] = _sensorManager.isAvailable();
     doc["hardware"]["bluetooth_connected"] = _bluetoothManager ? _bluetoothManager->isConnected() : false;
+    doc["hardware"]["bluetooth_advertising"] = _bluetoothManager ? _bluetoothManager->isAdvertising() : false;
+    doc["hardware"]["bluetooth_last_event"] = _bluetoothManager ? _bluetoothManager->getLastEvent() : "";
+    doc["hardware"]["bluetooth_last_event_age_ms"] = _bluetoothManager ? _bluetoothManager->getLastEventAgeMs() : 0;
 
     String output;
     serializeJson(doc, output);

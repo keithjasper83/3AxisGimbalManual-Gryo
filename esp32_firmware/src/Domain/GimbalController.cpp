@@ -1,4 +1,5 @@
 #include "GimbalController.h"
+#include <math.h>
 
 GimbalController::GimbalController(ConfigManager& configManager)
     : _configManager(configManager),
@@ -9,6 +10,9 @@ GimbalController::GimbalController(ConfigManager& configManager)
     _currentPos = {90, 90, 90};
     _targetPos = {90, 90, 90};
     _autoTarget = {90, 90, 90};
+    _phoneGyroRates = {0, 0, 0};
+    _phoneGyroLastMs = 0;
+    _phoneGyroActive = false;
     _moveActive = false;
     _mutex = xSemaphoreCreateMutex();
 }
@@ -44,6 +48,11 @@ void GimbalController::update(float dt, float gyroYaw, float gyroPitch, float gy
     // Always update timed moves regardless of mode
     updateTimedMove();
 
+    // Apply phone gyro rate control in manual mode
+    if (config.mode == MODE_MANUAL) {
+        updatePhoneGyro(dt);
+    }
+
     if (config.mode == MODE_AUTO) {
         updateAuto(dt, gyroYaw, gyroPitch, gyroRoll);
     }
@@ -65,6 +74,36 @@ void GimbalController::updateAuto(float dt, float gyroYaw, float gyroPitch, floa
     _targetPos.yaw = _currentPos.yaw + correctionYaw;
     _targetPos.pitch = _currentPos.pitch + correctionPitch;
     _targetPos.roll = _currentPos.roll + correctionRoll;
+}
+
+void GimbalController::updatePhoneGyro(float dt) {
+    if (!_phoneGyroActive) {
+        return;
+    }
+
+    uint32_t age = millis() - _phoneGyroLastMs;
+    if (age > PHONE_GYRO_TIMEOUT_MS) {
+        _phoneGyroActive = false;
+        _phoneGyroRates = {0, 0, 0};
+        return;
+    }
+
+    float gx = _phoneGyroRates.pitch;
+    float gy = _phoneGyroRates.roll;
+    float gz = _phoneGyroRates.yaw;
+
+    if (fabsf(gx) < PHONE_GYRO_DEADBAND_RAD_S) gx = 0.0f;
+    if (fabsf(gy) < PHONE_GYRO_DEADBAND_RAD_S) gy = 0.0f;
+    if (fabsf(gz) < PHONE_GYRO_DEADBAND_RAD_S) gz = 0.0f;
+
+    const float radToDeg = 57.2958f;
+    float yawDelta = gz * radToDeg * PHONE_GYRO_GAIN_YAW * dt;
+    float pitchDelta = gx * radToDeg * PHONE_GYRO_GAIN_PITCH * dt;
+    float rollDelta = gy * radToDeg * PHONE_GYRO_GAIN_ROLL * dt;
+
+    _targetPos.yaw += yawDelta;
+    _targetPos.pitch += pitchDelta;
+    _targetPos.roll += rollDelta;
 }
 
 void GimbalController::updateTimedMove() {
@@ -129,6 +168,8 @@ void GimbalController::setManualPosition(float yaw, float pitch, float roll) {
     if (_configManager.getConfig().mode == MODE_MANUAL) {
         xSemaphoreTake(_mutex, portMAX_DELAY);
         _targetPos = {yaw, pitch, roll};
+        _phoneGyroActive = false;
+        _phoneGyroRates = {0, 0, 0};
         _moveActive = false; // Cancel any timed move
         xSemaphoreGive(_mutex);
     }
@@ -137,6 +178,26 @@ void GimbalController::setManualPosition(float yaw, float pitch, float roll) {
 void GimbalController::setAutoTarget(float yaw, float pitch, float roll) {
     xSemaphoreTake(_mutex, portMAX_DELAY);
     _autoTarget = {yaw, pitch, roll};
+    xSemaphoreGive(_mutex);
+}
+
+void GimbalController::setPhoneGyroRates(float gx, float gy, float gz) {
+    if (_configManager.getConfig().mode != MODE_MANUAL) {
+        return;
+    }
+
+    xSemaphoreTake(_mutex, portMAX_DELAY);
+    _phoneGyroRates = {gz, gx, gy};
+    _phoneGyroLastMs = millis();
+    _phoneGyroActive = true;
+    _moveActive = false; // Cancel any timed move
+    xSemaphoreGive(_mutex);
+}
+
+void GimbalController::clearPhoneGyro() {
+    xSemaphoreTake(_mutex, portMAX_DELAY);
+    _phoneGyroRates = {0, 0, 0};
+    _phoneGyroActive = false;
     xSemaphoreGive(_mutex);
 }
 

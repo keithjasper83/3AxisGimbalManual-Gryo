@@ -21,6 +21,8 @@ public:
 
     void setManualPosition(float yaw, float pitch, float roll);
     void setAutoTarget(float yaw, float pitch, float roll);
+    void setPhoneGyroRates(float gx, float gy, float gz);
+    void clearPhoneGyro();
 
     GimbalPosition getCurrentPosition();
     void center();
@@ -38,6 +40,9 @@ private:
     GimbalPosition _currentPos;
     GimbalPosition _targetPos;
     GimbalPosition _autoTarget;
+    GimbalPosition _phoneGyroRates;
+    uint32_t _phoneGyroLastMs;
+    bool _phoneGyroActive;
 
     // Timed Move State
     bool _moveActive;
@@ -50,5 +55,6 @@ private:
 
     void updateServos(const AppConfig& config);
     void updateAuto(float dt, float gyroYaw, float gyroPitch, float gyroRoll);
+    void updatePhoneGyro(float dt);
     void updateTimedMove();
 };

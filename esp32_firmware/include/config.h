@@ -50,6 +50,14 @@
 #define SERVO_UPDATE_RATE 20
 #define WEBSOCKET_UPDATE_RATE 100
 
+// Phone Gyro Rate Control
+// Gyro input is rad/s from the phone; firmware converts to deg/s and applies gain.
+#define PHONE_GYRO_GAIN_YAW 1.0f
+#define PHONE_GYRO_GAIN_PITCH 1.0f
+#define PHONE_GYRO_GAIN_ROLL 1.0f
+#define PHONE_GYRO_DEADBAND_RAD_S 0.02f
+#define PHONE_GYRO_TIMEOUT_MS 500
+
 // Operation Modes
 #define MODE_MANUAL 0
 #define MODE_AUTO 1

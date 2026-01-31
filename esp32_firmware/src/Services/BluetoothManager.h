@@ -19,6 +19,9 @@ public:
     void begin();
     void handle();
     bool isConnected();
+    bool isAdvertising() const;
+    const char* getLastEvent() const;
+    uint32_t getLastEventAgeMs() const;
     void updateStatus();
 
 private:
@@ -29,6 +32,11 @@ private:
     BLECharacteristic* _pStatusCharacteristic;
     volatile bool _deviceConnected;  // Accessed from BLE callback task
     volatile bool _oldDeviceConnected;
+    volatile bool _isAdvertising;
+    String _lastEvent;
+    uint32_t _lastEventMs;
+
+    void setEvent(const char* event);
 
     class ServerCallbacks : public BLEServerCallbacks {
         BluetoothManager* _manager;
