@@ -417,7 +417,7 @@ After calibration, run these tests:
 
 **Solutions**:
 1. Check serial monitor for "MPU6050 Sensor: FAILED"
-2. Verify I2C wiring (SDA=GPIO8, SCL=GPIO9)
+2. Verify I2C wiring (SDA=GPIO10, SCL=GPIO11)
 3. Run I2C scanner to detect sensor address
 4. Check sensor power (3.3V)
 

@@ -35,23 +35,25 @@ Connect three servo motors for 3-axis control:
 #### Yaw Servo (Base Rotation)
 | Servo Wire | ESP32 Pin | Notes |
 |------------|-----------|-------|
-| Signal (Orange/Yellow) | GPIO 13 | PWM Control |
+| Signal (Orange/Yellow) | GPIO 12 | PWM Control (consecutive pins) |
 | Power (Red) | 5V | External power recommended |
 | Ground (Brown/Black) | GND | Common ground with ESP32 |
 
 #### Pitch Servo (Tilt)
 | Servo Wire | ESP32 Pin | Notes |
 |------------|-----------|-------|
-| Signal (Orange/Yellow) | GPIO 12 | PWM Control |
+| Signal (Orange/Yellow) | GPIO 13 | PWM Control (consecutive pins) |
 | Power (Red) | 5V | External power recommended |
 | Ground (Brown/Black) | GND | Common ground with ESP32 |
 
 #### Roll Servo (Roll)
 | Servo Wire | ESP32 Pin | Notes |
 |------------|-----------|-------|
-| Signal (Orange/Yellow) | GPIO 14 | PWM Control |
+| Signal (Orange/Yellow) | GPIO 14 | PWM Control (consecutive pins) |
 | Power (Red) | 5V | External power recommended |
 | Ground (Brown/Black) | GND | Common ground with ESP32 |
+
+**Note**: GPIO 12, 13, and 14 are three physically consecutive pins on the ESP32-S3 board, allowing for clean wiring with a single 3-pin header.
 
 **Power Considerations:**
 - Servos under load can draw 500mA-1A each

@@ -14,8 +14,8 @@ A comprehensive code review and documentation update has been completed for the 
 
 1. **`docs/GPIO_PIN_REFERENCE.md`** (12,598 characters)
    - Complete pin configuration reference for all GPIO outputs
-   - Detailed specifications for servos (GPIO 13, 12, 14)
-   - Detailed specifications for MPU6050 gyro (GPIO 21, 22)
+   - Detailed specifications for servos (GPIO 12, 13, 14) - consecutive pins
+   - Detailed specifications for MPU6050 gyro (GPIO 10, 11) - consecutive pins
    - Control button configuration (GPIO 15)
    - Power supply requirements and wiring diagrams
    - Safety notes and troubleshooting
@@ -109,14 +109,14 @@ All GPIO pin assignments have been verified as correct and safe:
 
 | Component | GPIO Pin | Status | Notes |
 |-----------|----------|--------|-------|
-| **Yaw Servo** | GPIO 13 | ✅ Valid | PWM capable, safe to use |
-| **Pitch Servo** | GPIO 12 | ✅ Valid | PWM capable, safe to use |
-| **Roll Servo** | GPIO 14 | ✅ Valid | PWM capable, safe to use |
-| **MPU6050 SDA** | GPIO 21 | ✅ Valid | Standard I2C SDA pin |
-| **MPU6050 SCL** | GPIO 22 | ✅ Valid | Standard I2C SCL pin |
+| **Yaw Servo** | GPIO 12 | ✅ Valid | PWM capable, consecutive pins for single header |
+| **Pitch Servo** | GPIO 13 | ✅ Valid | PWM capable, consecutive pins for single header |
+| **Roll Servo** | GPIO 14 | ✅ Valid | PWM capable, consecutive pins for single header |
+| **MPU6050 SDA** | GPIO 10 | ✅ Valid | I2C SDA, consecutive pins for single header |
+| **MPU6050 SCL** | GPIO 11 | ✅ Valid | I2C SCL, consecutive pins for single header |
 | **Control Button** | GPIO 15 | ✅ Valid | Safe with pull-up enabled |
 
-**No pin conflicts or unsafe configurations found.**
+**Pin assignments optimized for clean wiring with physically consecutive pins.**
 
 ---
 
@@ -203,26 +203,30 @@ For bench testing, you'll need these connections:
 
 ### Minimal Setup (Single Servo Test):
 ```
-ESP32 GPIO 13 → Yaw Servo Signal (Orange)
+ESP32 GPIO 12 → Yaw Servo Signal (Orange)
 5V Power → Servo Power (Red)
 GND → Servo Ground (Brown) + ESP32 GND (COMMON GROUND!)
 ```
 
 ### Full Setup (Three Servos):
 ```
-ESP32 GPIO 13 → Yaw Servo Signal
-ESP32 GPIO 12 → Pitch Servo Signal
-ESP32 GPIO 14 → Roll Servo Signal
+ESP32 GPIO 12 → Yaw Servo Signal    (consecutive pins)
+ESP32 GPIO 13 → Pitch Servo Signal  (consecutive pins)
+ESP32 GPIO 14 → Roll Servo Signal   (consecutive pins)
 5V Power (3A+) → All Servo Power Wires
 GND → All Servo Ground + ESP32 GND
+
+Note: Use single 3-pin header for clean wiring
 ```
 
 ### Optional (MPU6050 Gyroscope):
 ```
-ESP32 GPIO 21 → MPU6050 SDA
-ESP32 GPIO 22 → MPU6050 SCL
+ESP32 GPIO 10 → MPU6050 SDA (consecutive pins)
+ESP32 GPIO 11 → MPU6050 SCL (consecutive pins)
 ESP32 3.3V → MPU6050 VCC (NOT 5V!)
 ESP32 GND → MPU6050 GND
+
+Note: Use single 4-pin header for clean wiring
 ```
 
 ### Optional (Control Button):
@@ -288,7 +292,7 @@ These requirements and the current bench-only limitations are documented in `doc
 
 2. **Hardware Setup**
    - Connect power to ESP32 via USB
-   - Connect one servo to GPIO 13 (Yaw)
+   - Connect one servo to GPIO 12 (Yaw)
    - Connect external 5V power to servo
    - Ensure common ground
 

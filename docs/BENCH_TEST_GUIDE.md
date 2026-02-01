@@ -168,7 +168,7 @@ System Ready!
 **Wiring Diagram**:
 ```
 ESP32               Servo (Yaw)
-GPIO 13  ────────→  Signal Wire (Orange/Yellow)
+GPIO 12  ────────→  Signal Wire (Orange/Yellow)
 
 5V Power Supply
 5V       ────────→  Servo Power (Red)
@@ -177,7 +177,7 @@ GND      ────────→  Servo Ground (Brown/Black)
 ```
 
 **Physical Setup**:
-1. [ ] Connect servo signal wire to ESP32 GPIO 13
+1. [ ] Connect servo signal wire to ESP32 GPIO 12
 2. [ ] Connect 5V supply to servo power wire (Red)
 3. [ ] Connect servo ground to power supply GND
 4. [ ] **CRITICAL**: Connect ESP32 GND to power supply GND (common ground)
@@ -207,7 +207,7 @@ Manual Position: Yaw=135.0, Pitch=90.0, Roll=90.0
 ```
 
 **Troubleshooting**:
-- Servo doesn't move: Check signal wire connection to GPIO 13
+- Servo doesn't move: Check signal wire connection to GPIO 12
 - Servo jitters: Check power supply voltage (should be stable 5V)
 - Servo jitters: Add 1000µF capacitor across servo power
 - Servo weak: Check power supply current capacity (>1A)
@@ -352,11 +352,13 @@ Position update: Yaw=95.0, Pitch=90.0, Roll=90.0
 **Wiring**:
 ```
 ESP32          MPU6050
-GPIO 21  ───→  SDA
-GPIO 22  ───→  SCL
+GPIO 10  ───→  SDA (consecutive pins)
+GPIO 11  ───→  SCL (consecutive pins)
 3.3V     ───→  VCC
 GND      ───→  GND
 ```
+
+**Note**: GPIO 10 and 11 are physically consecutive for single header connection.
 
 **Steps**:
 1. Power off ESP32
@@ -383,15 +385,17 @@ GND      ───→  GND
 **Wiring**:
 ```
 ESP32               Servos
-GPIO 13  ────────→  Yaw Servo Signal
-GPIO 12  ────────→  Pitch Servo Signal
-GPIO 14  ────────→  Roll Servo Signal
+GPIO 12  ────────→  Yaw Servo Signal    (consecutive pins)
+GPIO 13  ────────→  Pitch Servo Signal  (consecutive pins)
+GPIO 14  ────────→  Roll Servo Signal   (consecutive pins)
 
 5V Power Supply (3A+)
 5V       ────────→  All servo power wires (Red)
 GND      ────────→  All servo ground wires (Brown/Black)
          └────────→  ESP32 GND (COMMON GROUND!)
 ```
+
+**Note**: GPIO 12, 13, 14 are three consecutive pins for single header connection.
 
 **Steps**:
 1. Connect all three servos as shown
