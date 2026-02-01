@@ -143,17 +143,23 @@ The system follows a modern, upgradeable architecture:
 
 ```
 ESP32-S3        MPU6050
-GPIO8 (SDA)  → SDA
-GPIO9 (SCL)  → SCL
 3.3V         → VCC
 GND          → GND
+GPIO10 (SDA) → SDA
+GPIO11 (SCL) → SCL
+
+Note: GPIO10 and GPIO11 are physically adjacent on the ESP32-S3 board.
+Use a single 4-pin header for clean wiring: 3V3, GND, SDA(GPIO10), SCL(GPIO11)
 
 ESP32-S3        Servos
-GPIO13       → Yaw Servo Signal
-GPIO12       → Pitch Servo Signal
+GPIO12       → Yaw Servo Signal
+GPIO13       → Pitch Servo Signal
 GPIO14       → Roll Servo Signal
 5V (External)→ Servo Power (All 3)
 GND          → Servo Ground (All 3)
+
+Note: GPIO12, GPIO13, and GPIO14 are physically consecutive on the ESP32-S3 board.
+Use a single 3-pin header for servo signals (plus common 5V/GND rail).
 
 ESP32-S3        Button
 GPIO15       → Button Pin

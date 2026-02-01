@@ -14,13 +14,16 @@
 #define WIFI_TIMEOUT 10000 // 10 seconds
 
 // Servo Pin Configuration
-#define SERVO_PIN_YAW 13
-#define SERVO_PIN_PITCH 12
+// Using consecutive pins GPIO12, GPIO13, GPIO14 for single header connection
+#define SERVO_PIN_YAW 12
+#define SERVO_PIN_PITCH 13
 #define SERVO_PIN_ROLL 14
 
 // MPU6050 Configuration (ESP32-S3 compatible pins)
-#define MPU6050_SDA 8
-#define MPU6050_SCL 9
+// Using consecutive pins GPIO10, GPIO11 for single header connection
+// Pin order matches MPU6050 module: VCC(3V3), GND, SDA(GPIO10), SCL(GPIO11)
+#define MPU6050_SDA 10
+#define MPU6050_SCL 11
 
 // RGB LED Configuration (ESP32-S3-N16R8 onboard LED)
 #define RGB_LED_PIN 48

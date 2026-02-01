@@ -182,11 +182,11 @@ Architecture: DDD + SOC
 - **Hotspot Password**: `gimbal123`
 
 ### GPIO Pin Mapping
-- **Yaw Servo**: GPIO 13
-- **Pitch Servo**: GPIO 12
-- **Roll Servo**: GPIO 14
-- **MPU6050 SDA**: GPIO 21
-- **MPU6050 SCL**: GPIO 22
+- **Yaw Servo**: GPIO 12 (consecutive pins for single header)
+- **Pitch Servo**: GPIO 13 (consecutive pins for single header)
+- **Roll Servo**: GPIO 14 (consecutive pins for single header)
+- **MPU6050 SDA**: GPIO 10 (consecutive pins for single header)
+- **MPU6050 SCL**: GPIO 11 (consecutive pins for single header)
 
 ### Operation Modes
 - **Mode 0**: Manual (Direct Control)
